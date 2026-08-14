@@ -1,0 +1,63 @@
+{
+  "books": [
+    {
+      "slug": "orion",
+      "title": "おほしさまの かりうど オリオン",
+      "titleLines": [
+        "おほしさまの かりうど",
+        "オリオン"
+      ],
+      "subtitle": "さっくんのための おはなし",
+      "theme": "#f39c12",
+      "cover": "books/orion/p01.webp",
+      "pageCount": 12
+    },
+    {
+      "slug": "gemini",
+      "title": "ふたごの おほしさま カストルと ポルックス",
+      "titleLines": [
+        "ふたごの おほしさま",
+        "カストルと ポルックス"
+      ],
+      "subtitle": "さっくんのための おはなし",
+      "theme": "#1a8cb8",
+      "cover": "books/gemini/p01.webp",
+      "pageCount": 12
+    },
+    {
+      "slug": "ursa-major",
+      "title": "よぞらに うかぶ 親子グマ",
+      "titleLines": [
+        "よぞらに うかぶ 親子グマ"
+      ],
+      "subtitle": "おおぐま座と こぐま座の おはなし",
+      "theme": "#33499b",
+      "cover": "books/ursa-major/p01.webp",
+      "pageCount": 8
+    },
+    {
+      "slug": "cassiopeia",
+      "title": "北の空の女王 カシオペア",
+      "titleLines": [
+        "北の空の女王",
+        "カシオペア"
+      ],
+      "subtitle": "さっくんのための 星座と神話の おはなし",
+      "theme": "#6F5CC2",
+      "cover": "books/cassiopeia/p01.webp",
+      "pageCount": 11
+    },
+    {
+      "slug": "virgo",
+      "title": "おそらの おとめ デメテルと コムギの ほしスピカ",
+      "titleLines": [
+        "おそらの おとめ デメテルと",
+        "コムギの ほしスピカ"
+      ],
+      "subtitle": "さっくんのための おはなし",
+      "theme": "#2ecc71",
+      "cover": "books/virgo/p01.webp",
+      "pageCount": 10
+    }
+  ]
+}

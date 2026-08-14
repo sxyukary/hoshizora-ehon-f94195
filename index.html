@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#1a2a52">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ほしぞら絵本">
+<title>ほしぞら絵本</title>
+<link rel="manifest" href="app.webmanifest">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<link rel="icon" href="assets/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+
+<!-- ===== ほんだな ===== -->
+<section id="shelf" class="view on">
+  <header class="shelf-head">
+    <div class="title">
+      <span class="rule"></span>
+      <svg class="mark" width="15" height="15" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 0c1 7.2 4.8 11 12 12-7.2 1-11 4.8-12 12-1-7.2-4.8-11-12-12C7.2 11 11 7.2 12 0z"/>
+      </svg>
+      <h1>ほしぞら絵本</h1>
+      <svg class="mark" width="15" height="15" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 0c1 7.2 4.8 11 12 12-7.2 1-11 4.8-12 12-1-7.2-4.8-11-12-12C7.2 11 11 7.2 12 0z"/>
+      </svg>
+      <span class="rule r"></span>
+    </div>
+  </header>
+
+  <div class="rail" id="rail" aria-label="えほんの いちらん"></div>
+
+  <div class="dots" id="shelfDots" aria-hidden="true"></div>
+  <p class="hint">よこに すべらせて えらぶ</p>
+
+  <button class="tiny" id="resetStamps">スタンプを けす（おとなのひと）</button>
+</section>
+
+<!-- ===== よむ がめん ===== -->
+<section id="reader" class="view" hidden>
+  <div class="spread" id="spread">
+    <div class="pic"><img id="pic" alt=""></div>
+    <div class="text" id="text"></div>
+  </div>
+
+  <button class="tap tap-prev" id="tapPrev" aria-label="まえの ページ"></button>
+  <button class="tap tap-next" id="tapNext" aria-label="つぎの ページ"></button>
+
+  <div class="bar">
+    <button class="back" id="back">◀ ほんだな</button>
+    <div class="dots" id="pageDots" aria-hidden="true"></div>
+    <button class="done" id="done" hidden>よんだよ！</button>
+  </div>
+</section>
+
+<div class="loading" id="loading" hidden>ひらいています…</div>
+
+<script src="assets/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,243 @@
+/* ほしぞら絵本 — 7歳と4歳が自分で操作するための画面
+   設計方針は ../設計図.md を参照 */
+
+:root {
+  --navy-1: #1a2a52;
+  --navy-2: #2b3f70;
+  --ink: #333333;
+  --sub: #98a3b3;
+  --th: #f39c12;           /* 本ごとのテーマ色。JSで差し替える */
+  --bar-h: 74px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0; padding: 0; height: 100%;
+  overflow: hidden;                 /* 画面外へスクロールさせない */
+  overscroll-behavior: none;        /* 引っ張って更新を無効化 */
+}
+
+body {
+  font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: linear-gradient(180deg, var(--navy-1) 0%, var(--navy-2) 100%);
+  color: #fff;
+  /* 子どもの誤操作対策 */
+  touch-action: manipulation;       /* ダブルタップの拡大を無効化 */
+  -webkit-user-select: none; user-select: none;
+  -webkit-touch-callout: none;      /* 長押しメニューを無効化 */
+  -webkit-tap-highlight-color: transparent;
+}
+
+img { -webkit-user-drag: none; user-drag: none; pointer-events: none; }
+
+button { font-family: inherit; border: 0; background: none; color: inherit; cursor: pointer; }
+
+.view { display: none; height: 100%; }
+.view.on { display: flex; flex-direction: column; }
+
+/* =========================================================
+   ほんだな
+   ========================================================= */
+.shelf-head { padding: max(18px, env(safe-area-inset-top)) 16px 6px; }
+
+/* タイトルは、細い金の線と小さな星ではさむ。
+   絵文字は水彩の絵と質感が合わないので使わない（描き起こしのSVG）。 */
+.shelf-head .title {
+  display: flex; align-items: center; justify-content: center;
+  gap: clamp(8px, 2vw, 14px);
+  max-width: 580px; margin: 0 auto;
+}
+.shelf-head h1 {
+  margin: 0; font-weight: 700; color: #fff;
+  font-size: clamp(20px, 4.6vw, 28px);
+  letter-spacing: .16em; text-indent: .16em;   /* 字間のぶん、右にずれるのを戻す */
+  white-space: nowrap;
+}
+.shelf-head .mark { flex: 0 0 auto; fill: #e8c98f; }
+.shelf-head .rule {
+  flex: 1 1 0; min-width: 10px; max-width: 110px; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(232, 201, 143, .75));
+}
+.shelf-head .rule.r {
+  background: linear-gradient(90deg, rgba(232, 201, 143, .75), transparent);
+}
+
+.rail {
+  /* 画面の幅と高さの両方から決める。iPadでは大きく、iPhoneでも収まるように */
+  --cw: min(78vw, 58vh, 560px);
+  flex: 1; min-height: 0;
+  display: flex; align-items: center; gap: 20px;
+  overflow-x: auto; overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  padding: 8px calc((100vw - var(--cw)) / 2);
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.rail::-webkit-scrollbar { display: none; }
+
+.book {
+  flex: 0 0 var(--cw); scroll-snap-align: center;
+  background: #fff; color: var(--ink);
+  border: 5px solid var(--th); border-radius: 28px; overflow: hidden;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, .45);
+  display: flex; flex-direction: column;
+  max-height: 100%;
+  transition: transform .12s;
+}
+.book:active { transform: scale(.97); }
+
+.book .cover { position: relative; aspect-ratio: 1 / 1; min-height: 0; }
+.book .cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.book .stamps {
+  position: absolute; top: 10px; right: 12px;
+  display: flex; gap: 2px; font-size: 22px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .5));
+}
+
+.book .meta { padding: 14px 16px 18px; text-align: center; }
+.book .bt {
+  font-size: clamp(17px, 4.4vw, 22px); font-weight: 700; line-height: 1.5;
+  word-break: keep-all; overflow-wrap: break-word;
+}
+.book .bn { margin-top: 7px; font-size: 14px; color: var(--sub); }
+
+.hint { text-align: center; color: #b9cbef; font-size: 15px; margin: 4px 0 0; }
+
+.tiny {
+  align-self: center; margin: 6px 0 max(10px, env(safe-area-inset-bottom));
+  font-size: 11px; color: rgba(255, 255, 255, .3); padding: 8px 12px;
+}
+
+/* ドット（何冊目か / 何ページ目か） */
+.dots { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; padding: 12px 16px 0; }
+.dots i {
+  width: 10px; height: 10px; border-radius: 50%; display: block;
+  background: rgba(255, 255, 255, .3); transition: background .15s;
+}
+.dots i.on { background: #fff; }
+
+/* =========================================================
+   よむ がめん
+   ========================================================= */
+#reader { position: relative; }
+
+.spread {
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column;
+  gap: 12px;
+  padding: max(12px, env(safe-area-inset-top)) 14px 8px;
+}
+
+.pic {
+  flex: 1 1 auto; min-height: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.pic img {
+  max-width: 100%; max-height: 100%;
+  border-radius: 20px; border: 4px solid var(--th);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .45);
+  object-fit: contain; background: #f8f5ef;
+}
+
+.text {
+  /* 文章の分だけ高さを取り、余りを絵にわたす。
+     0 0 auto にしないと、文字を小さくした分を絵が吸ってしまい、
+     いつまでも枠に収まらない。 */
+  flex: 0 0 auto; max-height: 58%;
+  overflow: hidden;
+  background: #fff; color: var(--ink);
+  border-radius: 20px; padding: 16px 20px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, .3);
+  text-align: left;                 /* 元の絵本と同じ左揃え */
+}
+.text p {
+  margin: 0 0 .7em; line-height: 1.75; font-weight: 500;
+  letter-spacing: .04em;            /* 元の絵本の 0.05em に合わせる */
+  /* 日本語はどこでも折り返せるようにする。狭い画面ではみ出さないため。
+     読みやすい区切りは、元の絵本が入れている改行がそのまま効く。 */
+  word-break: normal; overflow-wrap: anywhere; line-break: strict;
+  /* --fit は、文章が画面に収まらないときにJSが少しずつ小さくする倍率 */
+  font-size: calc(clamp(15px, 2.3vh + .7vw, 24px) * var(--fit, 1));
+}
+.text p:last-child { margin-bottom: 0; }
+.text .hl { color: var(--th); font-weight: 700; }
+
+/* ふりがな（おおぐま座など、元の絵本に入っているもの） */
+.text ruby { ruby-position: over; -webkit-ruby-position: before; }
+.text rt {
+  font-size: .48em; font-weight: 500; color: #7b8494;
+  letter-spacing: 0; user-select: none;
+}
+
+.text.has-ruby p { line-height: 2.15; }
+.text.has-ruby.dense p { line-height: 2.05; }
+.text.has-ruby.denser p { line-height: 2.0; }
+
+/* 文章が多いページは少しだけ小さくする */
+.text.dense p  { font-size: calc(clamp(14px, 2.0vh + .6vw, 21px) * var(--fit, 1)); line-height: 1.65; }
+.text.denser p { font-size: calc(clamp(13px, 1.7vh + .5vw, 18px) * var(--fit, 1)); line-height: 1.6; }
+
+/* 横向き（iPadを寝かせたとき）は 絵が左・文字が右 */
+@media (orientation: landscape) and (min-width: 700px) {
+  .spread { flex-direction: row; align-items: stretch; gap: 16px; }
+  .pic { flex: 1 1 55%; }
+  .text {
+    flex: 1 1 45%; max-height: none;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 24px 28px;
+  }
+}
+
+/* ページをめくるタップ領域（見えないボタン） */
+.tap {
+  position: absolute; top: 0; bottom: var(--bar-h);
+  background: none; padding: 0;
+}
+.tap-prev { left: 0; width: 33%; }
+.tap-next { left: 33%; right: 0; }
+.tap:disabled { cursor: default; }
+
+/* 下のバー */
+.bar {
+  position: relative; z-index: 2;
+  height: var(--bar-h);
+  padding: 0 14px max(6px, env(safe-area-inset-bottom));
+  display: flex; align-items: center; gap: 12px;
+}
+.bar .dots { flex: 1; padding: 0; }
+
+.back {
+  flex: 0 0 auto;
+  font-size: 17px; font-weight: 700; color: #fff;
+  background: rgba(255, 255, 255, .16);
+  border-radius: 999px; padding: 13px 20px;
+  min-height: 48px;                 /* 指で押しやすい大きさ */
+}
+.back:active { background: rgba(255, 255, 255, .3); }
+
+.done {
+  flex: 0 0 auto;
+  font-size: 18px; font-weight: 700; color: #fff;
+  background: var(--th); border-radius: 999px; padding: 13px 24px;
+  min-height: 48px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .4);
+  animation: pop .3s ease-out;
+}
+@keyframes pop { from { transform: scale(.7); opacity: 0; } }
+
+/* ページが切り替わるときの、ふわっとした出方 */
+.spread.turn .pic img, .spread.turn .text { animation: fade .22s ease-out; }
+@keyframes fade { from { opacity: 0; transform: translateY(6px); } }
+
+.loading {
+  position: fixed; inset: 0; display: grid; place-items: center;
+  background: rgba(20, 30, 60, .85); font-size: 18px; z-index: 10;
+}
+.loading[hidden] { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .spread.turn .pic img, .spread.turn .text, .done { animation: none; }
+}
