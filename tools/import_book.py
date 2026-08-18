@@ -33,10 +33,11 @@ SLUG_MAP = {
     "ふたご座": "gemini",
     "おおぐま座": "ursa-major",
     "おとめ座": "virgo",
+    "いて座": "sagittarius",
 }
 
 # 表示順（本棚に並ぶ順番）
-BOOK_ORDER = ["orion", "gemini", "ursa-major", "cassiopeia", "virgo"]
+BOOK_ORDER = ["orion", "gemini", "ursa-major", "cassiopeia", "virgo", "sagittarius"]
 
 # テーマ色の上書き（ふたご座とおおぐま座が元は同じ紫だったため振り分け直す）
 # ※暫定値。Step 2 で実物を見て確定する。

@@ -58,6 +58,17 @@
       "theme": "#2ecc71",
       "cover": "books/virgo/p01.webp",
       "pageCount": 10
+    },
+    {
+      "slug": "sagittarius",
+      "title": "ほしぞらになった けんじゃ",
+      "titleLines": [
+        "ほしぞらになった けんじゃ"
+      ],
+      "subtitle": "いてざの ケイロンの おはなし",
+      "theme": "#6366f1",
+      "cover": "books/sagittarius/p01.webp",
+      "pageCount": 7
     }
   ]
 }
