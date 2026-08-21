@@ -2,7 +2,7 @@
    ・アプリの骨組み（画面・並び）は最初にまとめて保存する
    ・絵本の中身は、一度読んだものが自動で保存され、次からネットなしで開ける */
 
-const VERSION = "v1";
+const VERSION = "v20260822-aquarius";
 const SHELL = `hoshizora-shell-${VERSION}`;
 const BOOKS = `hoshizora-books-${VERSION}`;
 
