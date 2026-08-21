@@ -69,6 +69,17 @@
       "theme": "#6366f1",
       "cover": "books/sagittarius/p01.webp",
       "pageCount": 7
+    },
+    {
+      "slug": "aquarius",
+      "title": "みずがめざの おはなし",
+      "titleLines": [
+        "みずがめざの おはなし"
+      ],
+      "subtitle": "ガニュメデスと めぐみの みずがめ",
+      "theme": "#0284c7",
+      "cover": "books/aquarius/p01.webp",
+      "pageCount": 8
     }
   ]
 }
