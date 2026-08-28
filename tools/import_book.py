@@ -59,6 +59,7 @@ class BookParser(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.stack = []          # (tag, class属性) の入れ子
         self.doc_title = ""
+        self.title_cover_image = ""
         self.h1_lines = []
         self.subtitle = ""
         self.pages = []          # [{"image": data-uri, "alt": str, "paragraphs": [...]}]
@@ -84,8 +85,10 @@ class BookParser(HTMLParser):
         if tag == "title":
             self._in_doc_title = True
 
-        if tag == "img" and "page-image" in cls.split():
-            if self._cur_page is not None:
+        if tag == "img":
+            if "title-cover-image" in cls.split():
+                self.title_cover_image = a.get("src", "")
+            elif "page-image" in cls.split() and self._cur_page is not None:
                 self._cur_page["image"] = a.get("src", "")
                 self._cur_page["alt"] = a.get("alt", "")
             # img は空要素なのでスタックに積まない
@@ -278,8 +281,17 @@ def main():
             }
         )
 
-    # 表紙は1ページ目の画像を流用する
-    cover = pages_data[0]["image"] if pages_data else None
+    # 表紙画像：title-page に画像があればそれを cover.webp に、なければ1ページ目を流用
+    if parser.title_cover_image:
+        before, after, size_before, size_after = data_uri_to_webp(
+            parser.title_cover_image, out_dir / "cover.webp"
+        )
+        total_before += before
+        total_after += after
+        cover = "cover.webp"
+        print(f"  cover {size_before[0]}x{size_before[1]} {before/1024/1024:5.2f}MB → {size_after[0]}x{size_after[1]} {after/1024:6.1f}KB")
+    else:
+        cover = pages_data[0]["image"] if pages_data else None
 
     theme = THEME_OVERRIDE.get(slug, extract_theme(html))
 
