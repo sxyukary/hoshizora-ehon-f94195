@@ -1,16 +1,26 @@
 {
   "books": [
     {
-      "slug": "orion",
-      "title": "おほしさまの かりうど オリオン",
+      "slug": "orion-scorpio",
+      "title": "オリオンと さそりの おはなし",
       "titleLines": [
-        "おほしさまの かりうど",
-        "オリオン"
+        "オリオンと さそりの おはなし"
       ],
-      "subtitle": "さっくんのための おはなし",
-      "theme": "#f39c12",
-      "cover": "books/orion/p01.webp",
-      "pageCount": 12
+      "subtitle": "〜ゆうかんな かりうどと だいちの サソリ〜",
+      "theme": "#d97706",
+      "cover": "books/orion-scorpio/p01.webp",
+      "pageCount": 8
+    },
+    {
+      "slug": "orion-artemis",
+      "title": "オリオンと つきのめがみの おはなし",
+      "titleLines": [
+        "オリオンと つきのめがみの おはなし"
+      ],
+      "subtitle": "〜かりうど オリオンと めがみ アルテミス〜",
+      "theme": "#2563eb",
+      "cover": "books/orion-artemis/p01.webp",
+      "pageCount": 8
     },
     {
       "slug": "gemini",

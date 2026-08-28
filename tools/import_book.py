@@ -28,6 +28,8 @@ WEBP_QUALITY = 82
 
 # 星座名 → フォルダ名（英語スラッグ）
 SLUG_MAP = {
+    "オリオン座とさそり": "orion-scorpio",
+    "オリオン座とつきのめがみ": "orion-artemis",
     "オリオン座": "orion",
     "カシオペア座": "cassiopeia",
     "ふたご座": "gemini",
@@ -38,11 +40,13 @@ SLUG_MAP = {
 }
 
 # 表示順（本棚に並ぶ順番）
-BOOK_ORDER = ["orion", "gemini", "ursa-major", "cassiopeia", "virgo", "sagittarius", "aquarius"]
+BOOK_ORDER = ["orion-scorpio", "orion-artemis", "gemini", "ursa-major", "cassiopeia", "virgo", "sagittarius", "aquarius"]
 
 # テーマ色の上書き（ふたご座とおおぐま座が元は同じ紫だったため振り分け直す）
 # ※暫定値。Step 2 で実物を見て確定する。
 THEME_OVERRIDE = {
+    "orion-scorpio": "#d97706",  # 大地と黄金のこんぼう・アンタレスの琥珀色
+    "orion-artemis": "#2563eb",  # 月夜の青・リゲルの青白
     "gemini": "#1a8cb8",      # 双子星の青白い光
     "ursa-major": "#33499b",  # 北の夜空の藍
 }
