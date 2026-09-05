@@ -90,6 +90,17 @@
       "theme": "#0284c7",
       "cover": "books/aquarius/p01.webp",
       "pageCount": 8
+    },
+    {
+      "slug": "aries",
+      "title": "きんの けを もつ おひつじ",
+      "titleLines": [
+        "きんの けを もつ おひつじ"
+      ],
+      "subtitle": "〜おひつじざの おはなし〜",
+      "theme": "#f59e0b",
+      "cover": "books/aries/cover.webp",
+      "pageCount": 7
     }
   ]
 }

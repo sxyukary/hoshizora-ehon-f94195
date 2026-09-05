@@ -37,10 +37,11 @@ SLUG_MAP = {
     "おとめ座": "virgo",
     "いて座": "sagittarius",
     "みずがめ座": "aquarius",
+    "おひつじ座": "aries",
 }
 
 # 表示順（本棚に並ぶ順番）
-BOOK_ORDER = ["orion-scorpio", "orion-artemis", "gemini", "ursa-major", "cassiopeia", "virgo", "sagittarius", "aquarius"]
+BOOK_ORDER = ["orion-scorpio", "orion-artemis", "gemini", "ursa-major", "cassiopeia", "virgo", "sagittarius", "aquarius", "aries"]
 
 # テーマ色の上書き（ふたご座とおおぐま座が元は同じ紫だったため振り分け直す）
 # ※暫定値。Step 2 で実物を見て確定する。
@@ -49,6 +50,7 @@ THEME_OVERRIDE = {
     "orion-artemis": "#2563eb",  # 月夜の青・リゲルの青白
     "gemini": "#1a8cb8",      # 双子星の青白い光
     "ursa-major": "#33499b",  # 北の夜空の藍
+    "aries": "#f59e0b",       # 黄金の羊とハマルのゴールド
 }
 
 
