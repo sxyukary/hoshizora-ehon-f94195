@@ -101,6 +101,17 @@
       "theme": "#f59e0b",
       "cover": "books/aries/cover.webp",
       "pageCount": 7
+    },
+    {
+      "slug": "cancer",
+      "title": "ヒュドラと ちいさな カニ",
+      "titleLines": [
+        "ヒュドラと ちいさな カニ"
+      ],
+      "subtitle": "〜かにざの おはなし〜",
+      "theme": "#e05d45",
+      "cover": "books/cancer/cover.webp",
+      "pageCount": 8
     }
   ]
 }
