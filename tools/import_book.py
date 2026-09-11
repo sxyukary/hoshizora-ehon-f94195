@@ -39,10 +39,12 @@ SLUG_MAP = {
     "みずがめ座": "aquarius",
     "おひつじ座": "aries",
     "かに座": "cancer",
+    "うお座": "pisces",
+    "うおざ": "pisces",
 }
 
 # 表示順（本棚に並ぶ順番）
-BOOK_ORDER = ["orion-scorpio", "orion-artemis", "gemini", "ursa-major", "cassiopeia", "virgo", "sagittarius", "aquarius", "aries", "cancer"]
+BOOK_ORDER = ["orion-scorpio", "orion-artemis", "gemini", "ursa-major", "cassiopeia", "virgo", "sagittarius", "aquarius", "aries", "cancer", "pisces"]
 
 # テーマ色の上書き（ふたご座とおおぐま座が元は同じ紫だったため振り分け直す）
 # ※暫定値。Step 2 で実物を見て確定する。
@@ -53,6 +55,7 @@ THEME_OVERRIDE = {
     "ursa-major": "#33499b",  # 北の夜空の藍
     "aries": "#f59e0b",       # 黄金の羊とハマルのゴールド
     "cancer": "#e05d45",      # カニのコーラルレッドと友情の光
+    "pisces": "#e85d75",      # 親子の絆を結ぶリボンのローズピンク
 }
 
 

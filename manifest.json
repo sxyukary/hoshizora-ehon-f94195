@@ -112,6 +112,17 @@
       "theme": "#e05d45",
       "cover": "books/cancer/cover.webp",
       "pageCount": 8
+    },
+    {
+      "slug": "pisces",
+      "title": "リボンで むすばれた ふたり",
+      "titleLines": [
+        "リボンで むすばれた ふたり"
+      ],
+      "subtitle": "〜うおざの おはなし〜",
+      "theme": "#e85d75",
+      "cover": "books/pisces/cover.webp",
+      "pageCount": 8
     }
   ]
 }
