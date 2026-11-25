@@ -311,11 +311,12 @@ def main():
         "theme": theme,
         "cover": cover,
         "pages": pages_data,
-        "source": src.name,
+        # 元ファイル名の「〇〇の絵本_」の部分は公開しない（星座名だけ残す）
+        "source": src.name.split("_", 1)[-1],
     }
-    (out_dir / "book.json").write_text(
-        json.dumps(book, ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    book_text = json.dumps(book, ensure_ascii=False, indent=2)
+    check_private_words(book_text, src.name)
+    (out_dir / "book.json").write_text(book_text, encoding="utf-8")
 
     print(
         f"  ── {len(pages_data)}ページ  "
@@ -325,6 +326,26 @@ def main():
 
     update_manifest()
     return total_before, total_after
+
+
+PRIVATE_WORDS = ROOT / "tools" / "private_words.txt"
+
+
+def check_private_words(text, label):
+    """公開してはいけない言葉（子どもの呼び名など）が残っていたら止める。
+    言葉の一覧は tools/private_words.txt（Git に入れない）に1行1語で書く。"""
+    if not PRIVATE_WORDS.exists():
+        print("  ⚠ tools/private_words.txt が無いので、名前のチェックを飛ばしました")
+        return
+    words = [w.strip() for w in PRIVATE_WORDS.read_text(encoding="utf-8").splitlines()
+             if w.strip() and not w.startswith("#")]
+    hits = [w for w in words if w in text]
+    if hits:
+        sys.exit(
+            f"  ✖ {label} に公開しない言葉が残っています: {', '.join(hits)}\n"
+            "    元の絵本HTMLは書き換えず、books/ の book.json を直すか、"
+            "取り込み後に置き換えてください"
+        )
 
 
 def update_manifest():

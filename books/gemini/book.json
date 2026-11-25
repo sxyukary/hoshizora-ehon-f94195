@@ -5,7 +5,7 @@
     "ふたごの おほしさま",
     "カストルと ポルックス"
   ],
-  "subtitle": "さっくんのための おはなし",
+  "subtitle": "ふたござの おはなし",
   "theme": "#1a8cb8",
   "cover": "p01.webp",
   "pages": [
@@ -602,5 +602,5 @@
       "audio": null
     }
   ],
-  "source": "さっくんの絵本_ふたご座.html"
+  "source": "ふたご座.html"
 }

@@ -29,7 +29,7 @@
         "ふたごの おほしさま",
         "カストルと ポルックス"
       ],
-      "subtitle": "さっくんのための おはなし",
+      "subtitle": "ふたござの おはなし",
       "theme": "#1a8cb8",
       "cover": "books/gemini/p01.webp",
       "pageCount": 12
@@ -52,7 +52,7 @@
         "北の空の女王",
         "カシオペア"
       ],
-      "subtitle": "さっくんのための 星座と神話の おはなし",
+      "subtitle": "星座と神話の おはなし",
       "theme": "#6F5CC2",
       "cover": "books/cassiopeia/p01.webp",
       "pageCount": 11
@@ -64,7 +64,7 @@
         "おそらの おとめ デメテルと",
         "コムギの ほしスピカ"
       ],
-      "subtitle": "さっくんのための おはなし",
+      "subtitle": "おとめざの おはなし",
       "theme": "#2ecc71",
       "cover": "books/virgo/p01.webp",
       "pageCount": 10
