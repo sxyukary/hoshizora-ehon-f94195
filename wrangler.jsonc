@@ -1,0 +1,13 @@
+// ほしぞら絵本の公開（Cloudflare Workers・静的ファイルだけ）。tools/build.cjs が dist/ に写したファイルだけを配る。
+// 送り出し: node tools/build.cjs && node tests/build.test.cjs && npx wrangler@4 deploy
+// 名前を変えると公開アドレスが変わり、端末の「読んだよ」が引き継がれないので変えない。
+{
+  "name": "hoshizora-ehon-edd931",
+  "compatibility_date": "2026-11-01",
+  "workers_dev": true,
+  "preview_urls": false,
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "none"
+  }
+}

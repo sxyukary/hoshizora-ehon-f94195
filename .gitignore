@@ -17,3 +17,7 @@ tools/private_words.txt
 
 # Claude Code の手元設定
 .claude/
+
+# Cloudflare に送るために写したもの（node tools/build.cjs が作る）
+dist/
+.wrangler/

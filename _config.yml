@@ -5,3 +5,6 @@ exclude:
   - "AGENTS.md"
   - "CLAUDE.md"
   - "tools/"
+  - "tests/"
+  - "serve.py"
+  - "wrangler.jsonc"

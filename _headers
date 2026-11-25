@@ -1,0 +1,3 @@
+# Cloudflare で配るときの追加ヘッダー（検索エンジンに載せない）
+/*
+  X-Robots-Tag: noindex, nofollow

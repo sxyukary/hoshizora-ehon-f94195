@@ -1,0 +1,5 @@
+{
+  "files": ["index.html", "manifest.json", "app.webmanifest", "sw.js", "robots.txt", "_headers"],
+  "dirs": ["assets", "books"],
+  "extensions": [".html", ".js", ".css", ".webp", ".png", ".svg", ".json", ".webmanifest"]
+}
