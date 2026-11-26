@@ -66,7 +66,7 @@ button { font-family: inherit; border: 0; background: none; color: inherit; curs
 
 .rail {
   /* 画面の幅と高さの両方から決める。iPadでは大きく、iPhoneでも収まるように */
-  --cw: min(78vw, 58vh, 560px);
+  --cw: min(78vw, 50vh, 560px);
   flex: 1; min-height: 0;
   display: flex; align-items: center; gap: 20px;
   overflow-x: auto; overflow-y: hidden;
@@ -91,11 +91,45 @@ button { font-family: inherit; border: 0; background: none; color: inherit; curs
 .book .cover { position: relative; aspect-ratio: 1 / 1; min-height: 0; }
 .book .cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
+/* 表紙の「よんだよ」の星。色ごとに1行。6こ以上は 星1つ＋数字 */
 .book .stamps {
-  position: absolute; top: 10px; right: 12px;
-  display: flex; gap: 2px; font-size: 22px;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .5));
+  position: absolute; top: 10px; right: 10px;
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 7px 10px; border-radius: 16px;
+  background: rgba(20, 32, 66, .72);
 }
+.book .stamps .row { display: flex; align-items: center; gap: 2px; }
+.book .stamps img { width: clamp(20px, 4.2vw, 28px); height: auto; display: block; }
+.book .stamps b { color: #fff; font-size: clamp(16px, 3.6vw, 22px); margin-left: 4px; line-height: 1; }
+
+/* 本棚の上の「ふたりの よぞら」。押された色のキラキラ星が ふえていく */
+.sky {
+  position: relative; flex: 0 0 auto;
+  height: clamp(64px, 13vh, 150px);
+  margin: 4px max(14px, env(safe-area-inset-left)) 2px max(14px, env(safe-area-inset-right));
+  border-radius: 20px; overflow: hidden;
+  border: 1px solid rgba(232, 201, 143, .45);
+  background: #1d2a5c url("yozora.webp") center / cover;
+}
+.sky .stars { position: absolute; inset: 0; }
+.sky .kira {
+  position: absolute; width: calc(clamp(14px, 2.4vh, 24px) * var(--k, 1)); height: auto;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, .45));
+}
+.sky .kira.new { animation: born 1.6s ease-out both; }
+@keyframes born {
+  0% { transform: translate(-50%, 60%) scale(.3); opacity: 0; }
+  60% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; filter: drop-shadow(0 0 12px #fff); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+.sky-label {
+  position: absolute; left: 14px; top: 8px;
+  font-size: clamp(11px, 1.6vh, 15px); font-weight: 700; letter-spacing: .14em;
+  color: rgba(255, 255, 255, .75);
+}
+/* 横にしたiPhoneは高さがないので、夜空は出さない（本を優先） */
+@media (max-height: 500px) { .sky { display: none; } }
 
 .book .meta { padding: 14px 16px 18px; text-align: center; }
 .book .bt {
@@ -218,14 +252,40 @@ button { font-family: inherit; border: 0; background: none; color: inherit; curs
 }
 .back:active { background: rgba(255, 255, 255, .3); }
 
-.done {
-  flex: 0 0 auto;
-  font-size: 18px; font-weight: 700; color: #fff;
-  background: var(--th); border-radius: 999px; padding: 13px 24px;
-  min-height: 48px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, .4);
-  animation: pop .3s ease-out;
+/* さいごのページの 星のボタン（ふたり分）。白地だと青白い星が見えにくいので、紺の地にする */
+.done { flex: 1; display: flex; justify-content: flex-end; gap: 10px; animation: pop .3s ease-out; }
+.done[hidden] { display: none; }
+.star-btn {
+  display: flex; align-items: center; gap: 6px;
+  min-height: 56px; padding: 4px 16px 4px 8px; border-radius: 999px;
+  background: #1f2f5e; border: 2px solid rgba(255, 255, 255, .35);
+  font-size: 17px; font-weight: 700; color: #fff;
+  transition: background .2s, box-shadow .2s, border-color .2s;
 }
+.star-btn img { width: 44px; height: 44px; display: block; }
+.star-btn.on { background: #33477f; border-color: #fff; }
+.star-btn.on[data-c="b"] { box-shadow: 0 0 18px rgba(188, 212, 255, .9); }
+.star-btn.on[data-c="r"] { box-shadow: 0 0 18px rgba(255, 171, 122, .9); }
+.star-btn:active { transform: scale(.96); }
+@media (max-width: 480px) {      /* iPhoneの縦。字を消して 星だけの丸いボタンに */
+  .star-btn { padding: 4px; min-width: 56px; justify-content: center; }
+  .star-btn span { display: none; }
+}
+.back.nudge { animation: nudge 1.4s ease-in-out 1s infinite; }
+@keyframes nudge { 50% { background: rgba(255, 255, 255, .34); } }
+
+.toast {
+  position: absolute; left: 50%; top: 38%; z-index: 5; transform: translate(-50%, -50%);
+  display: flex; align-items: center; gap: 10px; white-space: nowrap;
+  padding: 12px 24px; border-radius: 999px;
+  background: rgba(20, 32, 66, .92); border: 1px solid rgba(232, 201, 143, .6);
+  color: #f3d48a; font-size: clamp(17px, 3vh, 26px); font-weight: 700; letter-spacing: .1em;
+  pointer-events: none;
+}
+.toast img { width: 1.6em; height: auto; }
+.toast.show { animation: toast 1.8s ease-out both; }
+@keyframes toast { 0% { opacity: 0; } 12%, 75% { opacity: 1; } 100% { opacity: 0; } }
+
 @keyframes pop { from { transform: scale(.7); opacity: 0; } }
 
 /* ページが切り替わるときの、ふわっとした出方 */
@@ -239,5 +299,8 @@ button { font-family: inherit; border: 0; background: none; color: inherit; curs
 .loading[hidden] { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
-  .spread.turn .pic img, .spread.turn .text, .done { animation: none; }
+  .spread.turn .pic img, .spread.turn .text, .done, .sky .kira.new, .back.nudge, .toast.show { animation: none; }
 }
+
+/* display を指定した部品にも hidden を効かせる */
+.dots[hidden], .toast[hidden] { display: none; }

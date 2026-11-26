@@ -2,7 +2,7 @@
    ・アプリの骨組み（画面・並び）は最初にまとめて保存する
    ・絵本の中身は、一度読んだものが自動で保存され、次からネットなしで開ける */
 
-const VERSION = "v20261126-names";
+const VERSION = "v20261126-yondayo";
 const SHELL = `hoshizora-shell-${VERSION}`;
 const BOOKS = `hoshizora-books-${VERSION}`;
 
@@ -14,6 +14,11 @@ const SHELL_FILES = [
   "./assets/icon-180.png",
   "./assets/icon-192.png",
   "./assets/icon-512.png",
+  "./assets/star-blue.webp",
+  "./assets/star-red.webp",
+  "./assets/kira-blue.webp",
+  "./assets/kira-red.webp",
+  "./assets/yozora.webp",
   "./app.webmanifest",
   "./manifest.json",
 ];

@@ -4,15 +4,23 @@
 
 const $ = (id) => document.getElementById(id);
 
-const STORE_KEY = "hoshizora.stamps";
-const MAX_STAMPS = 5;
+/* 「よんだよ」は ふたり分。色で分ける（名前は出さない）。
+   b = あおじろい星（カストルの色）、r = あかい星（ポルックスの色） */
+const STORE_KEY = "hoshizora.reads";   // { slug: { b: 回数, r: 回数 } }
+const SKY_KEY = "hoshizora.sky";       // 押された順の色 ["b","r",...]。夜空の星になる
+const SEEN_KEY = "hoshizora.skySeen";  // 夜空で もう見せた星の数（新しい星だけ光らせる）
+const COLORS = ["b", "r"];
+const COLOR_NAME = { b: "あおじろい ほし", r: "あかい ほし" };
+const COLOR_FILE = { b: "blue", r: "red" };
+const MAX_ROW = 5;                     // 表紙の星は5こまで並べ、それより多いと 星1つ＋数字
+const MAX_SKY = 160;                   // 夜空に並べる星の上限
 
 const el = {
   shelf: $("shelf"), reader: $("reader"), loading: $("loading"),
-  rail: $("rail"), shelfDots: $("shelfDots"), reset: $("resetStamps"),
+  rail: $("rail"), shelfDots: $("shelfDots"), reset: $("resetStamps"), sky: $("sky"),
   spread: $("spread"), pic: $("pic"), text: $("text"),
   tapPrev: $("tapPrev"), tapNext: $("tapNext"),
-  back: $("back"), pageDots: $("pageDots"), done: $("done"),
+  back: $("back"), pageDots: $("pageDots"), done: $("done"), toast: $("toast"),
 };
 
 let manifest = [];
@@ -20,17 +28,73 @@ let book = null;      // いま開いている本
 let page = 0;         // いま何ページ目（0はじまり）
 const cache = new Map();
 
-/* ---------- 読んだ回数スタンプ（この端末の中だけに保存） ---------- */
-const readStamps = () => {
-  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }
-  catch { return {}; }
+/* ---------- 「よんだよ」の記録（この端末の中だけに保存） ---------- */
+const load = (key, empty) => {
+  try { return JSON.parse(localStorage.getItem(key)) || empty; }
+  catch { return empty; }
 };
-const addStamp = (slug) => {
-  const s = readStamps();
-  s[slug] = (s[slug] || 0) + 1;
-  try { localStorage.setItem(STORE_KEY, JSON.stringify(s)); } catch {}
-  return s[slug];
+const save = (key, v) => {
+  try { localStorage.setItem(key, JSON.stringify(v)); } catch {}
 };
+const readCounts = () => load(STORE_KEY, {});
+
+// この本を開いているあいだに押した色（もう一度押すと取り消せる）
+let pressed = new Set();
+
+function press(color) {
+  const counts = readCounts();
+  const c = counts[book.slug] || (counts[book.slug] = { b: 0, r: 0 });
+  const sky = load(SKY_KEY, []);
+  if (pressed.has(color)) {           // 取り消し：さっき増やした分を戻す
+    pressed.delete(color);
+    c[color] = Math.max(0, (c[color] || 0) - 1);
+    const i = sky.lastIndexOf(color);
+    if (i >= 0) sky.splice(i, 1);
+    const seen = load(SEEN_KEY, 0);
+    if (seen > sky.length) save(SEEN_KEY, sky.length);
+  } else {
+    pressed.add(color);
+    c[color] = (c[color] || 0) + 1;
+    sky.push(color);
+    showToast(color);
+  }
+  save(STORE_KEY, counts);
+  save(SKY_KEY, sky);
+  renderDone();
+}
+
+const starImg = (color, cls = "") =>
+  `<img class="${cls}" src="assets/star-${COLOR_FILE[color]}.webp" alt="">`;
+
+/* 夜空の星の位置。番号から毎回同じ場所が出るようにする（並びが変わらない） */
+function skyPos(i) {
+  const r = (n) => { const x = Math.sin(i * 12.9898 + n * 78.233) * 43758.5453; return x - Math.floor(x); };
+  return { x: 3 + r(1) * 94, y: 10 + r(2) * 80, s: r(3) < 0.25 ? 1.5 : r(3) < 0.6 ? 1.15 : 0.85 };
+}
+
+function renderSky() {
+  const sky = load(SKY_KEY, []).slice(0, MAX_SKY);
+  const seen = Math.min(load(SEEN_KEY, 0), sky.length);
+  el.sky.querySelector(".stars").innerHTML = sky.map((c, i) => {
+    const p = skyPos(i);
+    return `<img class="kira${i >= seen ? " new" : ""}" src="assets/kira-${COLOR_FILE[c]}.webp" alt=""
+      style="left:${p.x}%;top:${p.y}%;--k:${p.s}">`;
+  }).join("");
+  el.sky.setAttribute("aria-label", `ふたりの よぞら。ほし ${sky.length}こ`);
+  save(SEEN_KEY, sky.length);
+}
+
+function coverStamps(c) {
+  if (!c) return "";
+  const rows = COLORS.filter((k) => c[k] > 0).map((k) => {
+    const n = c[k];
+    const body = n > MAX_ROW
+      ? `${starImg(k)}<b>${n}</b>`
+      : starImg(k).repeat(n);
+    return `<div class="row" aria-label="${COLOR_NAME[k]} ${n}かい">${body}</div>`;
+  });
+  return rows.length ? `<div class="stamps">${rows.join("")}</div>` : "";
+}
 
 /* ---------- ほんだな ---------- */
 async function initShelf() {
@@ -42,14 +106,14 @@ async function initShelf() {
 }
 
 function renderShelf() {
-  const stamps = readStamps();
+  const counts = readCounts();
+  renderSky();
   el.rail.innerHTML = manifest.map((b) => {
-    const n = Math.min(stamps[b.slug] || 0, MAX_STAMPS);
     const title = (b.titleLines && b.titleLines.length ? b.titleLines : [b.title]).join("<br>");
     return `<button class="book" data-slug="${b.slug}" style="--th:${b.theme}">
       <div class="cover">
         <img src="${b.cover}" alt="">
-        ${n ? `<div class="stamps">${"⭐".repeat(n)}</div>` : ""}
+        ${coverStamps(counts[b.slug])}
       </div>
       <div class="meta">
         <div class="bt">${title}</div>
@@ -94,6 +158,7 @@ async function openBook(slug) {
     el.pageDots.innerHTML = book.pages.map(() => "<i></i>").join("");
 
     page = 0;
+    pressed = new Set();
     showPage(false);
     el.shelf.classList.remove("on");
     el.reader.hidden = false;
@@ -109,7 +174,7 @@ function closeBook() {
   el.reader.classList.remove("on");
   el.reader.hidden = true;
   el.shelf.classList.add("on");
-  renderShelf();          // スタンプの増加を反映
+  renderShelf();          // 星の増加を反映
   updateShelfDots();
   book = null;
 }
@@ -166,7 +231,10 @@ function showPage(animate = true) {
   // 端では反応させない（暴発させない）
   el.tapPrev.disabled = page === 0;
   el.tapNext.disabled = page === book.pages.length - 1;
-  el.done.hidden = page !== book.pages.length - 1;
+  const last = page === book.pages.length - 1;
+  el.done.hidden = !last;
+  el.pageDots.hidden = last;
+  if (last) renderDone();
 
   fitText();
 
@@ -219,10 +287,30 @@ el.tapPrev.addEventListener("click", () => go(-1));
 el.tapNext.addEventListener("click", () => go(1));
 el.back.addEventListener("click", closeBook);
 
-el.done.addEventListener("click", () => {
-  addStamp(book.slug);
-  closeBook();
+/* さいごのページの 星のボタン。読んだ人が 自分の色を押す。
+   ひとりの日は1つ、ふたりの日は2つ。押しても本は閉じない（もうひとりが押せるように） */
+function renderDone() {
+  el.done.innerHTML = COLORS.map((k) => {
+    const on = pressed.has(k);
+    return `<button type="button" class="star-btn${on ? " on" : ""}" data-c="${k}"
+      aria-pressed="${on}" aria-label="${COLOR_NAME[k]} ${on ? "ついたよ" : "よんだよ"}">
+      ${starImg(k)}<span>${on ? "ついたよ" : "よんだよ"}</span></button>`;
+  }).join("");
+  el.back.classList.toggle("nudge", pressed.size > 0);
+}
+el.done.addEventListener("click", (e) => {
+  const btn = e.target.closest(".star-btn");
+  if (btn) press(btn.dataset.c);
 });
+
+let toastTimer;
+function showToast(color) {
+  el.toast.innerHTML = `${starImg(color)}よぞらに ほしが ふえたよ`;
+  el.toast.hidden = false;
+  el.toast.classList.remove("show"); void el.toast.offsetWidth; el.toast.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.toast.hidden = true; }, 1800);
+}
 
 // スワイプでもめくれる
 let sx = 0, sy = 0, moved = false;
@@ -249,11 +337,11 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") closeBook();
 });
 
-// スタンプを消す（おとなのひと用。まちがい防止に2回たずねる）
+// 星の記録を消す（おとなのひと用。まちがい防止に2回たずねる）
 el.reset.addEventListener("click", () => {
-  if (!confirm("読んだ回数のスタンプを、ぜんぶ消しますか？")) return;
+  if (!confirm("読んだ回数の星と、夜空の星を、ぜんぶ消しますか？")) return;
   if (!confirm("本当に消します。よろしいですか？")) return;
-  try { localStorage.removeItem(STORE_KEY); } catch {}
+  try { [STORE_KEY, SKY_KEY, SEEN_KEY].forEach((k) => localStorage.removeItem(k)); } catch {}
   renderShelf();
   updateShelfDots();
 });
