@@ -18,8 +18,8 @@
     {
       "binding": "DB",
       "database_name": "hoshizora-ehon-sync",
-      // まだ作っていない（ゆかりさんの許可を取ってから npx wrangler@4 d1 create hoshizora-ehon-sync）
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      // 2026-11-27 に作成（アジア太平洋）
+      "database_id": "3605295c-fdaa-461f-a1a1-c33c913c58bc",
       "migrations_dir": "sync/migrations"
     }
   ]
