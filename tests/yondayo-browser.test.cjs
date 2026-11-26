@@ -17,7 +17,8 @@ const inside = (r, w, h) => r.left >= -1 && r.top >= -1 && r.right <= w + 1 && r
   const fail = (m) => { fails++; console.log('NG', m); };
   if (shots) fs.mkdirSync(shots, { recursive: true });
   for (const [name, w, h] of SIZES) {
-    const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
+    // 初回はオフライン用の仕組みが入ると自動で読み直すので、テストでは止める
+    const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1, serviceWorkers: 'block' });
     await page.goto(base);
     await page.evaluate(() => localStorage.clear());
     await page.reload();
