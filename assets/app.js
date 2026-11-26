@@ -5,11 +5,15 @@
 const $ = (id) => document.getElementById(id);
 
 /* 「よんだよ」は ふたり分。色で分ける（名前は出さない）。
-   b = あおじろい星（カストルの色）、r = あかい星（ポルックスの色） */
-const STORE_KEY = "hoshizora.reads";   // { slug: { b: 回数, r: 回数 } }
-const SKY_KEY = "hoshizora.sky";       // 押された順の色 ["b","r",...]。夜空の星になる
+   b = あおじろい星（カストルの色）、r = あかい星（ポルックスの色）
+   記録は 星1こずつ（assets/stars.js）。合言葉を入れると ほかの端末と そろう（sync/worker.js） */
+const St = window.Stars;
+const REC_KEY = "hoshizora.stars";     // assets/stars.js の記録
+const OLD_KEY = "hoshizora.reads";     // 前の版 { slug: { b: 回数, r: 回数 } }（読むだけ。はじめに1回 移す）
+const OLD_SKY = "hoshizora.sky";       // 前の版 押された順の色
 const SEEN_KEY = "hoshizora.skySeen";  // 夜空で もう見せた星の数（新しい星だけ光らせる）
-const COLORS = ["b", "r"];
+const SYNC_LS = "hoshizora.sync";      // { on, key, life: クラウドと そろえた代, last: そろえた時刻 }
+const COLORS = St.COLORS;
 const COLOR_NAME = { b: "あおじろい ほし", r: "あかい ほし" };
 const COLOR_FILE = { b: "blue", r: "red" };
 const MAX_ROW = 5;                     // 表紙の星は5こまで並べ、それより多いと 星1つ＋数字
@@ -17,7 +21,7 @@ const MAX_SKY = 160;                   // 夜空に並べる星の上限
 
 const el = {
   shelf: $("shelf"), reader: $("reader"), loading: $("loading"),
-  rail: $("rail"), shelfDots: $("shelfDots"), reset: $("resetStamps"), sky: $("sky"),
+  rail: $("rail"), shelfDots: $("shelfDots"), grownOpen: $("grownOpen"), sky: $("sky"),
   spread: $("spread"), pic: $("pic"), text: $("text"),
   tapPrev: $("tapPrev"), tapNext: $("tapNext"),
   back: $("back"), pageDots: $("pageDots"), done: $("done"), toast: $("toast"),
@@ -28,39 +32,40 @@ let book = null;      // いま開いている本
 let page = 0;         // いま何ページ目（0はじまり）
 const cache = new Map();
 
-/* ---------- 「よんだよ」の記録（この端末の中だけに保存） ---------- */
+/* ---------- 「よんだよ」の記録 ---------- */
 const load = (key, empty) => {
-  try { return JSON.parse(localStorage.getItem(key)) || empty; }
+  try { return JSON.parse(localStorage.getItem(key)) ?? empty; }
   catch { return empty; }
 };
 const save = (key, v) => {
-  try { localStorage.setItem(key, JSON.stringify(v)); } catch {}
+  try { localStorage.setItem(key, JSON.stringify(v)); return true; } catch { return false; }
 };
-const readCounts = () => load(STORE_KEY, {});
+function loadRec() {
+  const r = load(REC_KEY, null);
+  if (St.valid(r)) return r;
+  const moved = St.fromOld(load(OLD_KEY, {}), load(OLD_SKY, []));   // 前の版の星を移す（前の記録は消さない）
+  save(REC_KEY, moved);
+  return moved;
+}
+const saveRec = (r) => save(REC_KEY, r);
 
-// この本を開いているあいだに押した色（もう一度押すと取り消せる）
-let pressed = new Set();
+// この本を開いているあいだに押した色と、その星の番号（もう一度押すと取り消せる）
+let pressed = new Map();
 
 function press(color) {
-  const counts = readCounts();
-  const c = counts[book.slug] || (counts[book.slug] = { b: 0, r: 0 });
-  const sky = load(SKY_KEY, []);
-  if (pressed.has(color)) {           // 取り消し：さっき増やした分を戻す
+  const rec = loadRec();
+  if (pressed.has(color)) {           // 取り消し：さっき増やした星を消す
+    St.remove(rec, pressed.get(color));
     pressed.delete(color);
-    c[color] = Math.max(0, (c[color] || 0) - 1);
-    const i = sky.lastIndexOf(color);
-    if (i >= 0) sky.splice(i, 1);
-    const seen = load(SEEN_KEY, 0);
-    if (seen > sky.length) save(SEEN_KEY, sky.length);
+    const n = St.sky(rec).length;
+    if (load(SEEN_KEY, 0) > n) save(SEEN_KEY, n);
   } else {
-    pressed.add(color);
-    c[color] = (c[color] || 0) + 1;
-    sky.push(color);
+    pressed.set(color, St.add(rec, book.slug, color));
     showToast(color);
   }
-  save(STORE_KEY, counts);
-  save(SKY_KEY, sky);
+  saveRec(rec);
   renderDone();
+  syncSoon();
 }
 
 const starImg = (color, cls = "") =>
@@ -72,8 +77,8 @@ function skyPos(i) {
   return { x: 3 + r(1) * 94, y: 10 + r(2) * 80, s: r(3) < 0.25 ? 1.5 : r(3) < 0.6 ? 1.15 : 0.85 };
 }
 
-function renderSky() {
-  const sky = load(SKY_KEY, []).slice(0, MAX_SKY);
+function renderSky(rec = loadRec()) {
+  const sky = St.sky(rec).slice(0, MAX_SKY);
   const seen = Math.min(load(SEEN_KEY, 0), sky.length);
   el.sky.querySelector(".stars").innerHTML = sky.map((c, i) => {
     const p = skyPos(i);
@@ -106,8 +111,8 @@ async function initShelf() {
 }
 
 function renderShelf() {
-  const counts = readCounts();
-  renderSky();
+  const rec = loadRec(), counts = St.counts(rec);
+  renderSky(rec);
   el.rail.innerHTML = manifest.map((b) => {
     const title = (b.titleLines && b.titleLines.length ? b.titleLines : [b.title]).join("<br>");
     return `<button class="book" data-slug="${b.slug}" style="--th:${b.theme}">
@@ -127,6 +132,17 @@ function renderShelf() {
 
   el.rail.querySelectorAll(".book").forEach((btn) => {
     btn.addEventListener("click", () => openBook(btn.dataset.slug));
+  });
+}
+
+/* 星だけ描き直す（本棚の並びと すべらせた位置は そのまま） */
+function refreshStars() {
+  const rec = loadRec(), counts = St.counts(rec);
+  renderSky(rec);
+  el.rail.querySelectorAll(".book").forEach((btn) => {
+    const cover = btn.querySelector(".cover");
+    cover.querySelector(".stamps")?.remove();
+    cover.insertAdjacentHTML("beforeend", coverStamps(counts[btn.dataset.slug]));
   });
 }
 
@@ -158,7 +174,7 @@ async function openBook(slug) {
     el.pageDots.innerHTML = book.pages.map(() => "<i></i>").join("");
 
     page = 0;
-    pressed = new Set();
+    pressed = new Map();
     showPage(false);
     el.shelf.classList.remove("on");
     el.reader.hidden = false;
@@ -174,8 +190,8 @@ function closeBook() {
   el.reader.classList.remove("on");
   el.reader.hidden = true;
   el.shelf.classList.add("on");
-  renderShelf();          // 星の増加を反映
-  updateShelfDots();
+  refreshStars();         // 星の増加を反映
+  syncSoon();
   book = null;
 }
 
@@ -337,13 +353,174 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") closeBook();
 });
 
-// 星の記録を消す（おとなのひと用。まちがい防止に2回たずねる）
-el.reset.addEventListener("click", () => {
-  if (!confirm("読んだ回数の星と、夜空の星を、ぜんぶ消しますか？")) return;
-  if (!confirm("本当に消します。よろしいですか？")) return;
-  try { [STORE_KEY, SKY_KEY, SEEN_KEY].forEach((k) => localStorage.removeItem(k)); } catch {}
-  renderShelf();
-  updateShelfDots();
+/* ---------- ほかの端末と そろえる（合言葉の同期） ----------
+   同じアドレスの /sync/（sync/worker.js）に、星の記録だけを預ける。合体は assets/stars.js。
+   そろえるのは ひらいたとき・星を押したとき・本棚にもどったとき・画面にもどってきたとき。
+   つながらないときは 30秒・2分・10分あとに やりなおし、そのあとは次に押すまで待つ */
+let sync = { on: false, key: "", life: "", last: 0, ...load(SYNC_LS, {}) };
+const saveSync = () => save(SYNC_LS, sync);
+const SYNC_RETRY = [30000, 120000, 600000];
+let syncState = "", syncBusy = null, syncAgain = null, syncTimer = null, syncFails = 0;
+const syncReady = () => sync.on && sync.key.length >= 12;
+
+async function syncCall(method, p, body) {
+  const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 10000);
+  try {
+    const r = await fetch("sync/v1/" + p, {
+      method, cache: "no-store", signal: ctl.signal,
+      headers: { "x-sync-key": sync.key, ...(body ? { "content-type": "application/json" } : {}) },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    let data = null; try { data = await r.json(); } catch {}
+    return { status: r.status, data };
+  } finally { clearTimeout(t); }
+}
+const syncWhy = (s) => s === 401 ? "key" : s === 503 || s === 404 ? "closed" : "offline";
+
+/* クラウドの記録と この端末の記録を あわせる。
+   同じ代 → 合体／この端末が知っている代のあとで置きかえられた → クラウドに合わせ、そのあと押した星だけ持っていく／
+   はじめてつなぐ → この端末の星を クラウドの代に足す */
+function syncJoin(local, cloud) {
+  if (!cloud) return local;
+  if (cloud.life === local.life) return St.merge(local, cloud);
+  if (sync.life && local.life === sync.life) return St.carry(cloud, local);
+  return St.adopt(cloud, local);
+}
+
+async function syncRun() {
+  clearTimeout(syncTimer); syncTimer = null;
+  syncState = "busy"; showSyncStatus();
+  const start = loadRec();
+  let got, result;
+  try {
+    got = await syncCall("GET", "stars");
+    if (got.status !== 200) return syncEnd(syncWhy(got.status));
+    let cloud = got.data.data;
+    for (let i = 0; i < 3; i++) {
+      const send = syncJoin(start, cloud);
+      if (cloud && St.same(send, cloud)) { result = cloud; break; }
+      const r = await syncCall("POST", "stars", { data: send });
+      if (r.status === 200) { result = r.data.data; break; }
+      if (r.status === 409 && r.data) { cloud = r.data.data; continue; }
+      return syncEnd(r.status === 422 ? "full" : syncWhy(r.status));
+    }
+    if (!result) return syncEnd("offline");
+  } catch (e) { console.error("sync", e); return syncEnd("offline"); }
+  // とどくまでの あいだに押した星も 落とさない
+  const now = loadRec();
+  const fin = now.life === result.life ? St.merge(now, result) : now.life === start.life ? syncJoin(now, result) : now;
+  if (fin.life !== result.life) return syncEnd("offline");
+  const changed = !St.same(fin, now);
+  saveRec(fin);
+  sync.life = fin.life; sync.last = Date.now(); saveSync();
+  if (changed && !el.shelf.hidden && el.shelf.classList.contains("on")) refreshStars();
+  syncEnd("ok");
+  if (!St.same(fin, result)) syncSoon();
+}
+function syncEnd(why) {
+  syncState = why;
+  if (why === "ok") syncFails = 0;
+  else if (why === "offline") {
+    syncFails++;
+    if (syncFails <= SYNC_RETRY.length) syncTimer = setTimeout(syncNow, SYNC_RETRY[syncFails - 1]);
+  }
+  showSyncStatus();
+}
+/* いま そろえている途中なら、終わってから もう1回（待つ人には その1回が終わるまでの約束を返す） */
+function syncNow() {
+  if (!syncReady()) return Promise.resolve();
+  if (syncBusy) {
+    if (!syncAgain) syncAgain = syncBusy.then(() => { syncAgain = null; return syncNow(); });
+    return syncAgain;
+  }
+  syncBusy = syncRun().finally(() => { syncBusy = null; });
+  return syncBusy;
+}
+let soonTimer = null;
+function syncSoon() {
+  if (!syncReady() || syncState === "key" || syncState === "closed") return;
+  clearTimeout(soonTimer);
+  soonTimer = setTimeout(syncNow, 1500);
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden) { syncFails = 0; syncNow(); } });
+window.addEventListener("online", () => { syncFails = 0; syncNow(); });
+
+/* ---------- おとなのひと（本棚のいちばん下の小さなボタン） ---------- */
+const grown = {
+  dlg: $("grown"), key: $("syncKey"), save: $("syncSave"), off: $("syncOff"), status: $("syncStatus"),
+  restoreBox: $("restoreBox"), day: $("restoreDay"), restore: $("restoreGo"), reset: $("resetStamps"), close: $("grownClose"),
+};
+function showSyncStatus() {
+  if (!grown.dlg.open) return;
+  const t = sync.last ? new Date(sync.last).toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "";
+  const msg = !sync.on ? "いまは この端末の中だけに 星を しまっています。"
+    : syncState === "busy" ? "そろえています…"
+    : syncState === "key" ? "合言葉が ちがいます。もう一度 入れてください。"
+    : syncState === "closed" ? "そろえる準備が まだできていません（合言葉の設定が要ります）。"
+    : syncState === "full" ? "星が多すぎて そろえられません。"
+    : syncState === "offline" ? `つながりません。あとで もう一度 ためします。${t ? `（さいごに そろえたのは ${t}）` : ""}`
+    : t ? `ほかの端末と そろっています（${t}）。` : "そろえています…";
+  grown.status.textContent = msg;
+  grown.off.hidden = !sync.on;
+  grown.restoreBox.hidden = !sync.on;
+  grown.reset.textContent = sync.on ? "星を ぜんぶ けす（そろえている端末 すべて）" : "星を ぜんぶ けす（この端末）";
+}
+async function loadDays() {
+  grown.day.innerHTML = "";
+  if (!sync.on) return;
+  try {
+    const r = await syncCall("GET", "history");
+    if (r.status !== 200) return;
+    grown.day.innerHTML = r.data.days.map((d) => {
+      const at = new Date(d.at).toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
+      const note = d.day.includes("~") ? "（けす・もどす の直前）" : "";
+      return `<option value="${d.day}">${at} 星${d.n}こ${note}</option>`;
+    }).join("");
+  } catch {}
+}
+el.grownOpen.addEventListener("click", () => { grown.key.value = sync.key; grown.dlg.showModal(); showSyncStatus(); loadDays(); });
+grown.close.addEventListener("click", () => grown.dlg.close());
+grown.save.addEventListener("click", async () => {
+  const k = grown.key.value.trim();
+  if (k.length < 12 || k.length > 64) { grown.status.textContent = "合言葉は 12〜64文字に してください。"; return; }
+  if (k !== sync.key) sync.life = "";
+  sync.on = true; sync.key = k; saveSync();
+  syncFails = 0; syncState = "";
+  await syncNow();
+  refreshStars(); loadDays();
+});
+grown.off.addEventListener("click", () => {
+  if (!confirm("この端末で そろえるのを やめますか？（星は この端末に のこります）")) return;
+  sync = { on: false, key: "", life: "", last: 0 }; saveSync(); syncState = "";
+  grown.key.value = ""; showSyncStatus();
+});
+
+/* 新しい代に置きかえる（ぜんぶ けす・まえの日に もどす）。そろえているときは クラウドも置きかえる */
+async function replaceAll(next) {
+  if (!sync.on) { saveRec(next); return true; }
+  try {
+    await syncNow();
+    const r = await syncCall("PUT", "stars", { data: next, from: loadRec().life });
+    if (r.status !== 200) { alert("つながらないので できませんでした。あとで もう一度 ためしてください。"); return false; }
+    saveRec(r.data.data); sync.life = r.data.data.life; sync.last = Date.now(); saveSync();
+    return true;
+  } catch { alert("つながらないので できませんでした。あとで もう一度 ためしてください。"); return false; }
+}
+grown.reset.addEventListener("click", async () => {
+  const where = sync.on ? "そろえている端末 すべての" : "この端末の";
+  if (!confirm(`${where} 読んだ回数の星と、夜空の星を、ぜんぶ消しますか？`)) return;
+  if (!confirm("本当に消します。よろしいですか？" + (sync.on ? "（30日のあいだは「まえの日に もどす」で もどせます）" : ""))) return;
+  if (await replaceAll(St.fresh())) { save(SEEN_KEY, 0); refreshStars(); showSyncStatus(); loadDays(); }
+});
+grown.restore.addEventListener("click", async () => {
+  const day = grown.day.value;
+  if (!day || !confirm(`${grown.day.selectedOptions[0].textContent} の星に もどしますか？（いまの星は「けす・もどす の直前」として のこります）`)) return;
+  try {
+    const r = await syncCall("GET", "history/" + day);
+    if (r.status !== 200) throw new Error(r.status);
+    const next = { ...St.fresh(), stars: r.data.data.stars };
+    if (await replaceAll(next)) { refreshStars(); showSyncStatus(); loadDays(); }
+  } catch { alert("つながらないので できませんでした。"); }
 });
 
 /* ---------- オフラインで読めるようにする ---------- */
@@ -384,10 +561,11 @@ window.hoshizora = {
   get books() { return manifest; },
   get current() { return book; },
   openBook,
+  syncNow,
   goTo(i) { page = i; showPage(false); },
 };
 
-initShelf().then(openFromUrl).catch((err) => {
+initShelf().then(() => { openFromUrl(); syncNow(); }).catch((err) => {
   el.rail.innerHTML =
     `<p style="color:#fff;padding:20px;text-align:center">絵本を読み込めませんでした。<br><small>${err}</small></p>`;
 });

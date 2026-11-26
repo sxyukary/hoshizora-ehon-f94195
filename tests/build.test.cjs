@@ -48,7 +48,7 @@ for (const b of manifest.books) {
 // 3. 入っていてはいけないもの
 for (const f of all) {
   if (/\.(md|py|cjs|txt|yml|jsonc)$/.test(f) && f !== 'robots.txt') ng('作業用のファイルが入っている: ' + f);
-  if (/^(tools|tests|docs)\//.test(f) || f.includes('デザイン案') || f.includes('本文一覧')) ng('入れないものが入っている: ' + f);
+  if (/^(tools|tests|docs|sync)\//.test(f) || f.endsWith(".sql") || f.includes('デザイン案') || f.includes('本文一覧')) ng('入れないものが入っている: ' + f);
 }
 const html = fs.readFileSync(path.join(dist, 'index.html'), 'utf8');
 if (!html.includes('name="robots" content="noindex')) ng('index.html に noindex がない');

@@ -304,3 +304,30 @@ button { font-family: inherit; border: 0; background: none; color: inherit; curs
 
 /* display を指定した部品にも hidden を効かせる */
 .dots[hidden], .toast[hidden] { display: none; }
+
+/* おとなのひと（合言葉で そろえる・星を けす）。子どもの目にはふれない小さな入口から開く */
+.grown {
+  width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow: auto;
+  border: 0; border-radius: 20px; padding: 20px 20px 16px;
+  background: #fff; color: #333; font-family: inherit;
+  -webkit-user-select: text; user-select: text;
+}
+.grown::backdrop { background: rgba(10, 16, 40, .6); }
+.grown h2 { margin: 0 0 12px; font-size: 18px; }
+.grown h3 { margin: 0 0 6px; font-size: 15px; }
+.grown section { padding: 12px 0; border-top: 1px solid #e7ebf2; }
+.grown .note { margin: 0 0 10px; font-size: 13px; line-height: 1.6; color: #667; }
+.grown .row { display: flex; gap: 8px; align-items: center; margin-top: 8px; }
+.grown input, .grown select {
+  font: inherit; font-size: 16px; padding: 10px 12px; min-height: 44px;
+  border: 1px solid #c9d1de; border-radius: 10px; width: 100%; box-sizing: border-box; background: #fff; color: #333;
+}
+.grown select { flex: 1; min-width: 0; }
+.grown button {
+  min-height: 44px; padding: 0 16px; border-radius: 22px; font-size: 15px; font-weight: 700;
+  background: #33499b; color: #fff; white-space: nowrap;
+}
+.grown button.sub { background: #e7ebf2; color: #33499b; }
+.grown button.danger { background: none; color: #b8433c; border: 1px solid #e3b4b0; width: 100%; }
+.grown button.close { display: block; margin: 8px auto 0; background: none; color: #667; }
+.grown .status { margin: 10px 0 0; font-size: 13px; line-height: 1.6; color: #33499b; min-height: 1.6em; }

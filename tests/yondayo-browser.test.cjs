@@ -2,6 +2,8 @@
 // 使い方: python3 serve.py を動かしてから
 //   NODE_PATH=~/Projects/stamp-rally-template/node_modules node tests/yondayo-browser.test.cjs [アドレス] [画面を撮るフォルダ]
 const { chromium } = require('playwright');
+require('../assets/stars.js');
+const Stars = globalThis.Stars;
 const fs = require('fs'), path = require('path');
 const base = process.argv[2] || 'http://127.0.0.1:8765/';
 const shots = process.argv[3];
@@ -36,13 +38,16 @@ const inside = (r, w, h) => r.left >= -1 && r.top >= -1 && r.right <= w + 1 && r
     await page.click('#done .star-btn[data-c="b"]');
     await page.click('#done .star-btn[data-c="r"]');
     if (shots) await page.screenshot({ path: path.join(shots, `${name}-last.png`) });
-    const rec = await page.evaluate(() => ({ c: JSON.parse(localStorage.getItem('hoshizora.reads')), s: JSON.parse(localStorage.getItem('hoshizora.sky')) }));
-    const c = rec.c[slug];
-    if (!c || c.b !== 1 || c.r !== 1 || rec.s.length !== 2) fail(`${name}: 記録がおかしい ${JSON.stringify(rec)}`);
-    // 本棚へ。たくさん読んだことにして、表紙と夜空が収まるか
+    const rec = await page.evaluate(() => JSON.parse(localStorage.getItem('hoshizora.stars')));
+    const c = Stars.counts(rec)[slug];
+    if (!c || c.b !== 1 || c.r !== 1 || Object.keys(rec.gone).length !== 1) fail(`${name}: 記録がおかしい ${JSON.stringify(rec)}`);
+    // 本棚へ。たくさん読んだことにして、表紙と夜空が収まるか（ほかの本の星もまぜて夜空を60こに）
     await page.evaluate((s) => {
-      localStorage.setItem('hoshizora.reads', JSON.stringify({ [s]: { b: 12, r: 3 } }));
-      localStorage.setItem('hoshizora.sky', JSON.stringify(Array.from({ length: 60 }, (_, i) => (i % 3 ? 'b' : 'r'))));
+      const r = Stars.fresh();
+      for (let i = 0; i < 12; i++) Stars.add(r, s, 'b', 1000 + i);
+      for (let i = 0; i < 3; i++) Stars.add(r, s, 'r', 2000 + i);
+      for (let i = 0; i < 45; i++) Stars.add(r, 'gemini', i % 3 ? 'b' : 'r', 3000 + i);
+      localStorage.setItem('hoshizora.stars', JSON.stringify(r));
     }, slug);
     await page.click('#back');
     await page.waitForTimeout(300);

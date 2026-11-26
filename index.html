@@ -45,7 +45,7 @@
   <div class="dots" id="shelfDots" aria-hidden="true"></div>
   <p class="hint">よこに すべらせて えらぶ</p>
 
-  <button class="tiny" id="resetStamps">ほしを けす（おとなのひと）</button>
+  <button class="tiny" id="grownOpen">おとなのひと</button>
 </section>
 
 <!-- ===== よむ がめん ===== -->
@@ -69,6 +69,30 @@
 
 <div class="loading" id="loading" hidden>ひらいています…</div>
 
+<!-- ===== おとなのひと（合言葉で そろえる・星を けす） ===== -->
+<dialog class="grown" id="grown">
+  <h2>おとなのひと</h2>
+  <section>
+    <h3>ほかの端末と 星を そろえる</h3>
+    <p class="note">同じ合言葉を入れた iPad・iPhone で、読んだ星が そろいます。送るのは 星の色・本・押した時刻だけです。</p>
+    <input id="syncKey" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="合言葉（12文字以上）">
+    <div class="row">
+      <button type="button" id="syncSave">そろえる</button>
+      <button type="button" id="syncOff" class="sub">やめる</button>
+    </div>
+    <p class="status" id="syncStatus" aria-live="polite"></p>
+  </section>
+  <section id="restoreBox" hidden>
+    <h3>まえの日に もどす</h3>
+    <div class="row"><select id="restoreDay"></select><button type="button" id="restoreGo" class="sub">もどす</button></div>
+  </section>
+  <section>
+    <button type="button" id="resetStamps" class="danger">星を ぜんぶ けす</button>
+  </section>
+  <button type="button" id="grownClose" class="close">とじる</button>
+</dialog>
+
+<script src="assets/stars.js"></script>
 <script src="assets/app.js"></script>
 </body>
 </html>

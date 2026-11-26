@@ -1,13 +1,26 @@
-// ほしぞら絵本の公開（Cloudflare Workers・静的ファイルだけ）。tools/build.cjs が dist/ に写したファイルだけを配る。
+// ほしぞら絵本の公開（Cloudflare Workers）。アプリのファイル（dist）を配り、/sync/ だけ sync/worker.js が答える（「よんだよ」の星を端末どうしで そろえる）。
 // 送り出し: node tools/build.cjs && node tests/build.test.cjs && npx wrangler@4 deploy
 // 名前を変えると公開アドレスが変わり、端末の「読んだよ」が引き継がれないので変えない。
+// 同期の合言葉 SYNC_KEY は secret に入れ、ここには書かない（npx wrangler@4 secret put SYNC_KEY）。入れるまで /sync/ は閉じている。
 {
   "name": "hoshizora-ehon-edd931",
+  "main": "sync/worker.js",
   "compatibility_date": "2026-11-01",
   "workers_dev": true,
   "preview_urls": false,
   "assets": {
     "directory": "./dist",
-    "not_found_handling": "none"
-  }
+    "binding": "ASSETS",
+    "not_found_handling": "none",
+    "run_worker_first": ["/sync/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "hoshizora-ehon-sync",
+      // まだ作っていない（ゆかりさんの許可を取ってから npx wrangler@4 d1 create hoshizora-ehon-sync）
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "sync/migrations"
+    }
+  ]
 }
