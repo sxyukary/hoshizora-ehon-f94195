@@ -69,7 +69,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0.039,
+      "w": 1200,
+      "h": 896
     },
     {
       "image": "p02.webp",
@@ -124,7 +127,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0,
+      "w": 1200,
+      "h": 896
     },
     {
       "image": "p03.webp",
@@ -163,7 +169,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0,
+      "w": 1200,
+      "h": 896
     },
     {
       "image": "p04.webp",
@@ -202,7 +211,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0.043,
+      "w": 1200,
+      "h": 896
     },
     {
       "image": "p05.webp",
@@ -233,7 +245,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0,
+      "w": 1200,
+      "h": 896
     },
     {
       "image": "p06.webp",
@@ -280,7 +295,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0,
+      "w": 1200,
+      "h": 896
     },
     {
       "image": "p07.webp",
@@ -319,8 +337,12 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0,
+      "w": 1200,
+      "h": 896
     }
   ],
-  "source": "いて座.html"
+  "source": "いて座.html",
+  "coverTrim": 0.039
 }

@@ -63,7 +63,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0,
+      "w": 1200,
+      "h": 896
     },
     {
       "image": "p02.webp",
@@ -118,7 +121,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0,
+      "w": 1200,
+      "h": 896
     },
     {
       "image": "p03.webp",
@@ -153,7 +159,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0,
+      "w": 1200,
+      "h": 896
     },
     {
       "image": "p04.webp",
@@ -202,7 +211,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0,
+      "w": 1200,
+      "h": 896
     },
     {
       "image": "p05.webp",
@@ -255,7 +267,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0.039,
+      "w": 1200,
+      "h": 896
     },
     {
       "image": "p06.webp",
@@ -312,7 +327,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0,
+      "w": 1200,
+      "h": 896
     },
     {
       "image": "p07.webp",
@@ -359,7 +377,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0,
+      "w": 1200,
+      "h": 896
     },
     {
       "image": "p08.webp",
@@ -428,8 +449,12 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0,
+      "w": 1200,
+      "h": 896
     }
   ],
-  "source": "うお座.html"
+  "source": "うお座.html",
+  "coverTrim": 0
 }

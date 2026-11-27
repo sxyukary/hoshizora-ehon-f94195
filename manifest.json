@@ -9,7 +9,9 @@
       "subtitle": "〜ゆうかんな かりうどと だいちの サソリ〜",
       "theme": "#d97706",
       "cover": "books/orion-scorpio/cover.webp",
-      "pageCount": 8
+      "pageCount": 8,
+      "season": "fuyu",
+      "coverTrim": 0
     },
     {
       "slug": "orion-artemis",
@@ -20,7 +22,9 @@
       "subtitle": "〜かりうど オリオンと めがみ アルテミス〜",
       "theme": "#2563eb",
       "cover": "books/orion-artemis/cover.webp",
-      "pageCount": 8
+      "pageCount": 8,
+      "season": "fuyu",
+      "coverTrim": 0.039
     },
     {
       "slug": "gemini",
@@ -32,7 +36,9 @@
       "subtitle": "ふたござの おはなし",
       "theme": "#1a8cb8",
       "cover": "books/gemini/p01.webp",
-      "pageCount": 12
+      "pageCount": 12,
+      "season": "fuyu",
+      "coverTrim": 0.079
     },
     {
       "slug": "ursa-major",
@@ -43,7 +49,9 @@
       "subtitle": "おおぐま座と こぐま座の おはなし",
       "theme": "#33499b",
       "cover": "books/ursa-major/p01.webp",
-      "pageCount": 8
+      "pageCount": 8,
+      "season": "haru",
+      "coverTrim": 0.053
     },
     {
       "slug": "cassiopeia",
@@ -55,7 +63,9 @@
       "subtitle": "星座と神話の おはなし",
       "theme": "#6F5CC2",
       "cover": "books/cassiopeia/p01.webp",
-      "pageCount": 11
+      "pageCount": 11,
+      "season": "aki",
+      "coverTrim": 0.013
     },
     {
       "slug": "virgo",
@@ -67,7 +77,9 @@
       "subtitle": "おとめざの おはなし",
       "theme": "#2ecc71",
       "cover": "books/virgo/p01.webp",
-      "pageCount": 10
+      "pageCount": 10,
+      "season": "haru",
+      "coverTrim": 0.026
     },
     {
       "slug": "sagittarius",
@@ -78,7 +90,9 @@
       "subtitle": "いてざの ケイロンの おはなし",
       "theme": "#6366f1",
       "cover": "books/sagittarius/p01.webp",
-      "pageCount": 7
+      "pageCount": 7,
+      "season": "natsu",
+      "coverTrim": 0.039
     },
     {
       "slug": "aquarius",
@@ -89,7 +103,9 @@
       "subtitle": "ガニュメデスと めぐみの みずがめ",
       "theme": "#0284c7",
       "cover": "books/aquarius/p01.webp",
-      "pageCount": 8
+      "pageCount": 8,
+      "season": "aki",
+      "coverTrim": 0.056
     },
     {
       "slug": "aries",
@@ -100,7 +116,9 @@
       "subtitle": "〜おひつじざの おはなし〜",
       "theme": "#f59e0b",
       "cover": "books/aries/cover.webp",
-      "pageCount": 7
+      "pageCount": 7,
+      "season": "aki",
+      "coverTrim": 0
     },
     {
       "slug": "cancer",
@@ -111,7 +129,9 @@
       "subtitle": "〜かにざの おはなし〜",
       "theme": "#e05d45",
       "cover": "books/cancer/cover.webp",
-      "pageCount": 8
+      "pageCount": 8,
+      "season": "haru",
+      "coverTrim": 0
     },
     {
       "slug": "pisces",
@@ -122,7 +142,9 @@
       "subtitle": "〜うおざの おはなし〜",
       "theme": "#e85d75",
       "cover": "books/pisces/cover.webp",
-      "pageCount": 8
+      "pageCount": 8,
+      "season": "aki",
+      "coverTrim": 0
     }
   ]
 }

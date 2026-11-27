@@ -14,7 +14,8 @@ const SIZES = [
 (async () => {
   // Playwright 用のブラウザが入っていなければ、Mac の Google Chrome を使う
   const browser = await chromium.launch().catch(() => chromium.launch({ channel: 'chrome' }));
-  let fails = 0, checked = 0, minFit = 1;
+  let fails = 0, checked = 0, minFit = 1, minPs = 1;
+  const small = [];
   if (shots) fs.mkdirSync(shots, { recursive: true });
   for (const [name, w, h] of SIZES) {
     const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
@@ -24,8 +25,20 @@ const SIZES = [
     await page.goto(base, { waitUntil: 'networkidle' });
     await page.evaluate(() => document.fonts.ready);
     const books = await page.evaluate(() => window.hoshizora.books.map((b) => b.slug));
-    const cards = await page.locator('#rail > *').count();
-    if (cards !== books.length) { console.error(`✖ ${name}: 本棚のカード ${cards} / ${books.length}冊`); fails++; }
+    // 本棚は 季節の とびらごと。4つの季節を ぜんぶ開くと 全冊がそろう（どの季節にも1冊以上）
+    const perSeason = await page.evaluate(async () => {
+      const out = {};
+      for (const k of ['haru', 'natsu', 'aki', 'fuyu']) {
+        document.querySelector(`.door[data-season="${k}"]`).click();
+        await new Promise((r) => setTimeout(r, 30));
+        out[k] = [...document.querySelectorAll('#rail > .book')].map((b) => b.dataset.slug);
+      }
+      return out;
+    });
+    const shelved = Object.values(perSeason).flat();
+    if (shelved.length !== books.length || books.some((s) => !shelved.includes(s)) || Object.values(perSeason).some((l) => !l.length)) {
+      console.error(`✖ ${name}: 本棚の季節 ${JSON.stringify(perSeason)}`); fails++;
+    }
     for (const slug of books) {
       await page.evaluate((s) => window.hoshizora.openBook(s), slug);
       const n = await page.evaluate(() => window.hoshizora.current.pages.length);
@@ -36,10 +49,12 @@ const SIZES = [
         await page.waitForTimeout(60);
         const r = await page.evaluate(() => {
           const t = document.getElementById('text'), im = document.getElementById('pic');
-          return { over: t.scrollHeight - t.clientHeight, fit: parseFloat(getComputedStyle(t).getPropertyValue('--fit')) || 1, img: im.naturalWidth > 0 };
+          const ps = parseFloat(document.getElementById('picBox').style.getPropertyValue('--ps')) || 1;
+          return { over: t.scrollHeight - t.clientHeight, fit: parseFloat(getComputedStyle(t).getPropertyValue('--fit')) || 1, ps, img: im.naturalWidth > 0 };
         });
         checked++;
-        minFit = Math.min(minFit, r.fit);
+        minFit = Math.min(minFit, r.fit); minPs = Math.min(minPs, r.ps);
+        if (r.fit < 0.8) small.push(`${name} ${slug}/${i + 1} ${r.fit}`);
         if (r.over > 1) { console.error(`✖ ${name} ${slug}/${i + 1}: 文字が ${r.over}px はみ出し`); fails++; }
         if (!r.img) { console.error(`✖ ${name} ${slug}/${i + 1}: 絵が出ていない`); fails++; }
         if (shots && i === n - 1 && slug === books[0]) await page.screenshot({ path: path.join(shots, `${name}.png`) });
@@ -50,7 +65,8 @@ const SIZES = [
     await page.close();
   }
   await browser.close();
-  console.log(`${SIZES.length}種類の画面 × 全ページ = ${checked}画面を確認。いちばん縮んだ文字 ${minFit.toFixed(2)}倍`);
+  console.log(`${SIZES.length}種類の画面 × 全ページ = ${checked}画面を確認。いちばん縮んだ文字 ${minFit.toFixed(2)}倍・絵 ${minPs.toFixed(2)}倍`);
+  if (small.length) console.log(`字が 0.8倍より小さい画面 ${small.length}: ` + small.join(' / '));
   if (fails) { console.error(fails + ' 件の問題'); process.exit(1); }
   console.log('OK');
 })();

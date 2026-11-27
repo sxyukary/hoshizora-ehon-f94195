@@ -43,7 +43,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0.036,
+      "w": 1200,
+      "h": 896
     },
     {
       "image": "p02.webp",
@@ -66,7 +69,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0,
+      "w": 1200,
+      "h": 896
     },
     {
       "image": "p03.webp",
@@ -103,7 +109,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0,
+      "w": 1200,
+      "h": 896
     },
     {
       "image": "p04.webp",
@@ -150,7 +159,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0,
+      "w": 1200,
+      "h": 896
     },
     {
       "image": "p05.webp",
@@ -193,7 +205,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0.046,
+      "w": 1200,
+      "h": 896
     },
     {
       "image": "p06.webp",
@@ -216,7 +231,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0.049,
+      "w": 1200,
+      "h": 896
     },
     {
       "image": "p07.webp",
@@ -259,7 +277,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0.039,
+      "w": 1200,
+      "h": 896
     },
     {
       "image": "p08.webp",
@@ -298,8 +319,12 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0,
+      "w": 1200,
+      "h": 896
     }
   ],
-  "source": "オリオン座とさそり.html"
+  "source": "オリオン座とさそり.html",
+  "coverTrim": 0
 }

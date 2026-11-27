@@ -51,13 +51,21 @@ const inside = (r, w, h) => r.left >= -1 && r.top >= -1 && r.right <= w + 1 && r
     }, slug);
     await page.click('#back');
     await page.waitForTimeout(300);
-    const shelf = await page.evaluate(() => {
-      const card = document.querySelector('.book').getBoundingClientRect().toJSON();
+    const shelf = await page.evaluate((s) => {
+      // 本棚に もどると、読んだ本の季節が開いて その本が まんなかに来る
+      const book = document.querySelector(`.book[data-slug="${s}"]`);
+      const card = book.getBoundingClientRect().toJSON();
       const sky = document.getElementById('sky');
-      const rows = [...document.querySelectorAll('.book')[0].querySelectorAll('.stamps .row')].map((r) => r.textContent.trim());
-      return { card, skyShown: getComputedStyle(sky).display !== 'none', skyN: sky.querySelectorAll('.kira').length,
+      const rows = [...book.querySelectorAll('.stamps .row')].map((r) => r.textContent.trim());
+      const mid = Math.abs(card.left + card.width / 2 - innerWidth / 2) < 4;
+      // 夜空の星は 時計の下の ぼかし（上から14px）より下、本の上より上
+      const kira = [...sky.querySelectorAll('.kira')].map((k) => k.getBoundingClientRect());
+      const outside = kira.filter((r) => r.top + r.height / 2 < 14 || r.top + r.height / 2 > card.top || r.left + r.width / 2 < 0 || r.left + r.width / 2 > innerWidth).length;
+      return { card, mid, outside, skyShown: getComputedStyle(sky).display !== 'none', skyN: kira.length,
         scroll: document.documentElement.scrollHeight - innerHeight, rows };
-    });
+    }, slug);
+    if (!shelf.mid) fail(`${name}: 読んだ本が まんなかに来ていない`);
+    if (shelf.skyShown && shelf.outside) fail(`${name}: 夜空の帯から はみ出した星 ${shelf.outside}こ`);
     if (!inside(shelf.card, Infinity, h)) fail(`${name}: 表紙のカードが下にはみ出す ${Math.round(shelf.card.bottom)} > ${h}`);
     if (h > 500 && (!shelf.skyShown || shelf.skyN !== 60)) fail(`${name}: 夜空の星 ${shelf.skyN}`);
     if (shelf.rows[0] !== '12') fail(`${name}: 6こ以上が「星1つ＋数字」になっていない ${JSON.stringify(shelf.rows)}`);

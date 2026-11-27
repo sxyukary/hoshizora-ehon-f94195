@@ -1,13 +1,19 @@
 /* ほしぞら絵本 — 7歳と4歳が自分で操作するための画面
+   見た目は 案2「まどの むこう」（2026-11-28）：絵が主役。選んでいる本・読んでいるページの絵を
+   ぼかして 画面いっぱいに広げ、その上に 本や すりガラスの板を のせる。
    設計方針は ../設計図.md を参照 */
 
 :root {
-  --navy-1: #1a2a52;
-  --navy-2: #2b3f70;
-  --ink: #333333;
-  --sub: #98a3b3;
+  --night: #0c1022;
+  --ink: #2b2d42;
+  --glass: rgba(255, 255, 255, .86);
   --th: #f39c12;           /* 本ごとのテーマ色。JSで差し替える */
-  --bar-h: 74px;
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  /* ホーム画面から開くと、時計のあたりに iOS の ぼかしが かかる。そこには何も置かない */
+  --fog: calc(var(--sat) + 14px);
 }
 
 * { box-sizing: border-box; }
@@ -16,12 +22,12 @@ html, body {
   margin: 0; padding: 0; height: 100%;
   overflow: hidden;                 /* 画面外へスクロールさせない */
   overscroll-behavior: none;        /* 引っ張って更新を無効化 */
+  background: var(--night);         /* 画面の下に白い帯が出ないように、いちばん外も夜の色 */
 }
 
 body {
   font-family: 'Zen Maru Gothic', 'Hiragino Maru Gothic ProN', sans-serif;
   -webkit-font-smoothing: antialiased;
-  background: linear-gradient(180deg, var(--navy-1) 0%, var(--navy-2) 100%);
   color: #fff;
   /* 子どもの誤操作対策 */
   touch-action: manipulation;       /* ダブルタップの拡大を無効化 */
@@ -32,90 +38,40 @@ body {
 
 img { -webkit-user-drag: none; user-drag: none; pointer-events: none; }
 
-button { font-family: inherit; border: 0; background: none; color: inherit; cursor: pointer; }
+button { font-family: inherit; border: 0; background: none; color: inherit; cursor: pointer; padding: 0; }
+button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
 
-.view { display: none; height: 100%; }
+.ico { width: 1em; height: 1em; display: block; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* 画面ぜんたい。position: fixed で 端から端まで（ホーム画面から開いても 下まで届く） */
+.view { display: none; position: fixed; inset: 0; overflow: hidden; }
 .view.on { display: flex; flex-direction: column; }
+
+/* 絵の「紙のふち」を切り落とす：--z（tools/trim_edges.py が測った値から JS が決める）だけ拡大 */
+.cover img, .pic img { width: 100%; height: 100%; object-fit: cover; display: block; transform: scale(var(--z, 1)); }
 
 /* =========================================================
    ほんだな
    ========================================================= */
-.shelf-head { padding: max(18px, env(safe-area-inset-top)) 16px 6px; }
-
-/* タイトルは、細い金の線と小さな星ではさむ。
-   絵文字は水彩の絵と質感が合わないので使わない（描き起こしのSVG）。 */
-.shelf-head .title {
-  display: flex; align-items: center; justify-content: center;
-  gap: clamp(8px, 2vw, 14px);
-  max-width: 580px; margin: 0 auto;
+.shelf-bg { position: absolute; inset: -80px; pointer-events: none; }
+.shelf-bg .layer {
+  position: absolute; inset: 0; background: center / cover no-repeat;
+  filter: blur(40px) saturate(1.25) brightness(.6);
+  opacity: 0; transition: opacity .6s ease;
 }
-.shelf-head h1 {
-  margin: 0; font-weight: 700; color: #fff;
-  font-size: clamp(20px, 4.6vw, 28px);
-  letter-spacing: .16em; text-indent: .16em;   /* 字間のぶん、右にずれるのを戻す */
-  white-space: nowrap;
-}
-.shelf-head .mark { flex: 0 0 auto; fill: #e8c98f; }
-.shelf-head .rule {
-  flex: 1 1 0; min-width: 10px; max-width: 110px; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(232, 201, 143, .75));
-}
-.shelf-head .rule.r {
-  background: linear-gradient(90deg, rgba(232, 201, 143, .75), transparent);
+.shelf-bg .layer.on { opacity: 1; }
+.shelf-shade {
+  position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, rgba(6, 10, 26, .6), rgba(6, 10, 26, .05) 34%, rgba(6, 10, 26, .2) 62%, rgba(6, 10, 26, .7));
 }
 
-.rail {
-  /* 画面の幅と高さの両方から決める。iPadでは大きく、iPhoneでも収まるように */
-  --cw: min(78vw, 50vh, 560px);
-  flex: 1; min-height: 0;
-  display: flex; align-items: center; gap: 20px;
-  overflow-x: auto; overflow-y: hidden;
-  scroll-snap-type: x mandatory;
-  padding: 8px calc((100vw - var(--cw)) / 2);
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-.rail::-webkit-scrollbar { display: none; }
-
-.book {
-  flex: 0 0 var(--cw); scroll-snap-align: center;
-  background: #fff; color: var(--ink);
-  border: 5px solid var(--th); border-radius: 28px; overflow: hidden;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, .45);
-  display: flex; flex-direction: column;
-  max-height: 100%;
-  transition: transform .12s;
-}
-.book:active { transform: scale(.97); }
-
-.book .cover { position: relative; aspect-ratio: 1 / 1; min-height: 0; }
-.book .cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-/* 表紙の「よんだよ」の星。色ごとに1行。6こ以上は 星1つ＋数字 */
-.book .stamps {
-  position: absolute; top: 10px; right: 10px;
-  display: flex; flex-direction: column; gap: 4px;
-  padding: 7px 10px; border-radius: 16px;
-  background: rgba(20, 32, 66, .72);
-}
-.book .stamps .row { display: flex; align-items: center; gap: 2px; }
-.book .stamps img { width: clamp(20px, 4.2vw, 28px); height: auto; display: block; }
-.book .stamps b { color: #fff; font-size: clamp(16px, 3.6vw, 22px); margin-left: 4px; line-height: 1; }
-
-/* 本棚の上の「ふたりの よぞら」。押された色のキラキラ星が ふえていく */
-.sky {
-  position: relative; flex: 0 0 auto;
-  height: clamp(64px, 13vh, 150px);
-  margin: 4px max(14px, env(safe-area-inset-left)) 2px max(14px, env(safe-area-inset-right));
-  border-radius: 20px; overflow: hidden;
-  border: 1px solid rgba(232, 201, 143, .45);
-  background: #1d2a5c url("yozora.webp") center / cover;
-}
+/* ふたりの よぞら：時計の下の ぼかしより下から、本の上までの帯。高さは JS（layoutSky）が合わせる */
+.sky { position: absolute; left: 0; right: 0; top: var(--fog); height: 18vh; pointer-events: none; }
 .sky .stars { position: absolute; inset: 0; }
 .sky .kira {
-  position: absolute; width: calc(clamp(14px, 2.4vh, 24px) * var(--k, 1)); height: auto;
+  position: absolute; width: calc(clamp(10px, 1.8vh, 19px) * var(--k, 1)); height: auto;
   transform: translate(-50%, -50%);
-  filter: drop-shadow(0 0 4px rgba(255, 255, 255, .45));
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, .55));
 }
 .sky .kira.new { animation: born 1.6s ease-out both; }
 @keyframes born {
@@ -123,81 +79,151 @@ button { font-family: inherit; border: 0; background: none; color: inherit; curs
   60% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; filter: drop-shadow(0 0 12px #fff); }
   100% { transform: translate(-50%, -50%) scale(1); }
 }
-.sky-label {
-  position: absolute; left: 14px; top: 8px;
-  font-size: clamp(11px, 1.6vh, 15px); font-weight: 700; letter-spacing: .14em;
-  color: rgba(255, 255, 255, .75);
-}
-/* 横にしたiPhoneは高さがないので、夜空は出さない（本を優先） */
-@media (max-height: 500px) { .sky { display: none; } }
 
-.book .meta { padding: 14px 16px 18px; text-align: center; }
+.wordmark {
+  position: relative; z-index: 2; align-self: center;
+  margin: calc(var(--fog) + 10px + 2.4vh) 0 0;
+  font-weight: 900; font-size: clamp(20px, 4.8vw, 30px);
+  letter-spacing: .18em; text-indent: .18em; white-space: nowrap;
+  text-shadow: 0 2px 16px rgba(6, 10, 26, .6);
+}
+
+.rail {
+  /* 本の大きさは 幅と高さの両方から決める。iPadでは大きく、iPhoneでも収まるように */
+  --cw: min(82vw, 50dvh, 680px);
+  position: relative; z-index: 2;
+  flex: 1; min-height: 0;
+  display: flex; align-items: center; gap: 5vw;
+  overflow-x: auto; overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  padding: 0 calc((100vw - var(--cw)) / 2);
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.rail::-webkit-scrollbar { display: none; }
+
+.book {
+  flex: 0 0 var(--cw); scroll-snap-align: center;
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  transition: transform .14s;
+}
+.book:active { transform: scale(.97); }
+.book .cover {
+  position: relative; width: 100%; aspect-ratio: 4 / 3; overflow: hidden;
+  border-radius: 26px; background: #1b2140;
+  box-shadow: 0 28px 60px rgba(0, 0, 0, .55), inset 0 0 0 1px rgba(255, 255, 255, .25);
+}
 .book .bt {
-  font-size: clamp(17px, 4.4vw, 22px); font-weight: 700; line-height: 1.5;
-  word-break: keep-all; overflow-wrap: break-word;
+  margin-top: .9em; font-size: clamp(18px, 4.6vw, 27px); font-weight: 700; line-height: 1.45;
+  word-break: keep-all; overflow-wrap: anywhere;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, .5);
 }
-.book .bn { margin-top: 7px; font-size: 14px; color: var(--sub); }
+.book .bn { margin-top: .25em; font-size: 14px; color: rgba(255, 255, 255, .72); }
 
-.hint { text-align: center; color: #b9cbef; font-size: 15px; margin: 4px 0 0; }
-
-.tiny {
-  align-self: center; margin: 6px 0 max(10px, env(safe-area-inset-bottom));
-  font-size: 11px; color: rgba(255, 255, 255, .3); padding: 8px 12px;
+/* 表紙の「よんだよ」の星。色ごとに1行。6こ以上は 星1つ＋数字 */
+.book .stamps {
+  position: absolute; top: 12px; right: 12px; z-index: 1;
+  display: flex; flex-direction: column; gap: 3px;
+  padding: 6px 10px; border-radius: 18px;
+  background: rgba(16, 22, 52, .74); color: #fff;   /* 白地だと あおじろい星が見えにくいので 夜の色 */
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .25);
 }
+.book .stamps .row { display: flex; align-items: center; gap: 2px; }
+.book .stamps img { width: clamp(18px, min(4.2vw, 3.6dvh), 28px); height: auto; display: block; }
+.book .stamps b { font-size: clamp(15px, min(3.6vw, 3dvh), 22px); margin-left: 4px; line-height: 1; }
 
 /* ドット（何冊目か / 何ページ目か） */
-.dots { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; padding: 12px 16px 0; }
-.dots i {
-  width: 10px; height: 10px; border-radius: 50%; display: block;
-  background: rgba(255, 255, 255, .3); transition: background .15s;
-}
+.dots { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; }
+.dots i { width: 8px; height: 8px; border-radius: 50%; display: block; background: rgba(255, 255, 255, .32); transition: background .15s; }
 .dots i.on { background: #fff; }
+#shelfDots { position: relative; z-index: 2; padding: 1.2vh 16px 1.8vh; }
+
+/* 季節の とびら（案B）。下に大きく並べて、指が届きやすく */
+.doors {
+  position: relative; z-index: 2; align-self: center;
+  display: flex; gap: clamp(4px, 2vw, 14px); padding: 8px; border-radius: 30px;
+  background: rgba(255, 255, 255, .14);
+  -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+}
+.door {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  width: clamp(68px, 18vw, 104px); min-height: 60px; padding: 9px 0 8px; border-radius: 22px;
+  font-size: clamp(14px, 3.4vw, 18px); font-weight: 700; color: rgba(255, 255, 255, .88);
+  transition: background .2s, color .2s;
+}
+.door svg { width: 1.8em; height: 1.8em; display: block; }
+.door[aria-pressed="true"] { background: #fff; color: var(--ink); }
+
+.tiny {
+  position: relative; z-index: 2; align-self: center;
+  margin: 2px 0 max(6px, var(--sab));
+  font-size: 11px; letter-spacing: .1em; color: rgba(255, 255, 255, .35); padding: 8px 14px;
+}
+
+/* 横にしたiPhone（高さがない）は、タイトルを出さず 本を優先 */
+@media (max-height: 500px) {
+  .wordmark, .sky { display: none; }   /* 夜空も 前の版と同じく 出さない（星の帯の高さがない） */
+  .rail { --cw: min(70vw, 44dvh, 680px); margin-top: calc(var(--fog) + 4px); }
+  .book .bt { margin-top: .4em; font-size: 17px; }
+  .book .bn { display: none; }
+  #shelfDots { padding: 6px 16px; }
+  .door { min-height: 48px; padding: 5px 0; flex-direction: row; justify-content: center; gap: 6px; }
+  .door svg { width: 1.4em; height: 1.4em; }
+}
 
 /* =========================================================
    よむ がめん
+   絵が主役。うしろに そのページの絵を ぼかして広げ、文は すりガラスの板にのせる
    ========================================================= */
-#reader { position: relative; }
+.reader-bg {
+  position: absolute; inset: -80px; pointer-events: none;
+  background: center / cover no-repeat;
+  filter: blur(40px) brightness(.55) saturate(1.2);
+}
 
+/* .spread には z-index を付けない（中の 星のボタン（.done）を、めくるボタン（.tap）より上に出すため） */
 .spread {
-  flex: 1; min-height: 0;
-  display: flex; flex-direction: column;
-  gap: 12px;
-  padding: max(12px, env(safe-area-inset-top)) 14px 8px;
+  position: absolute; inset: 0;
+  display: grid; gap: 14px;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas: "pic" "text" "done";
+  padding: calc(var(--fog) + 62px) calc(var(--sar) + 12px) calc(var(--sab) + 12px) calc(var(--sal) + 12px);
 }
 
+/* 絵の枠の形は、絵そのものの形（--ar：横÷縦）。真四角の絵も 横長の絵も 切らずに見せる。
+   --ps は 文が多いページで 絵を少し小さくする倍率（JS の fitText が決める。字を縮めるより先に） */
 .pic {
-  flex: 1 1 auto; min-height: 0;
-  display: flex; align-items: center; justify-content: center;
-}
-.pic img {
-  max-width: 100%; max-height: 100%;
-  border-radius: 20px; border: 4px solid var(--th);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, .45);
-  object-fit: contain; background: #f8f5ef;
+  grid-area: pic; justify-self: center; align-self: center;
+  width: calc(min(100%, 40dvh * var(--ar, 1.333)) * var(--ps, 1));
+  aspect-ratio: var(--ar, 1.333); overflow: hidden;
+  border-radius: 22px; background: #1b2140;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, .45);
 }
 
 .text {
-  /* 文章の分だけ高さを取り、余りを絵にわたす。
-     0 0 auto にしないと、文字を小さくした分を絵が吸ってしまい、
-     いつまでも枠に収まらない。 */
-  flex: 0 0 auto; max-height: 58%;
+  grid-area: text;
+  display: flex; flex-direction: column;
   overflow: hidden;
-  background: #fff; color: var(--ink);
-  border-radius: 20px; padding: 16px 20px;
-  box-shadow: 0 10px 26px rgba(0, 0, 0, .3);
+  background: var(--glass); color: var(--ink);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4); backdrop-filter: blur(20px) saturate(1.4);
+  border-radius: 26px; padding: 18px 22px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .25);
   text-align: left;                 /* 元の絵本と同じ左揃え */
 }
+.text .in { margin-block: auto; }   /* 短い文は 板のまんなかに。長い文は 上から */
 .text p {
   margin: 0 0 .7em; line-height: 1.75; font-weight: 500;
   letter-spacing: .04em;            /* 元の絵本の 0.05em に合わせる */
-  /* 日本語はどこでも折り返せるようにする。狭い画面ではみ出さないため。
-     読みやすい区切りは、元の絵本が入れている改行がそのまま効く。 */
-  word-break: normal; overflow-wrap: anywhere; line-break: strict;
+  /* 分かち書きの すきまでだけ 折り返す（「う／つくしい」と 言葉の途中で切れないように）。
+     それでも1行に入らない長い言葉だけは、どこででも折り返す */
+  word-break: keep-all; overflow-wrap: anywhere; line-break: strict;
   /* --fit は、文章が画面に収まらないときにJSが少しずつ小さくする倍率 */
-  font-size: calc(clamp(15px, 2.3vh + .7vw, 24px) * var(--fit, 1));
+  font-size: calc(clamp(16px, 2.1dvh + .8vw, 30px) * var(--fit, 1));
 }
 .text p:last-child { margin-bottom: 0; }
-.text .hl { color: var(--th); font-weight: 700; }
+.text .hl { color: color-mix(in srgb, var(--th) 80%, #000); font-weight: 700; }
 
 /* ふりがな（おおぐま座など、元の絵本に入っているもの） */
 .text ruby { ruby-position: over; -webkit-ruby-position: before; }
@@ -211,75 +237,80 @@ button { font-family: inherit; border: 0; background: none; color: inherit; curs
 .text.has-ruby.denser p { line-height: 2.0; }
 
 /* 文章が多いページは少しだけ小さくする */
-.text.dense p  { font-size: calc(clamp(14px, 2.0vh + .6vw, 21px) * var(--fit, 1)); line-height: 1.65; }
-.text.denser p { font-size: calc(clamp(13px, 1.7vh + .5vw, 18px) * var(--fit, 1)); line-height: 1.6; }
+.text.dense p  { font-size: calc(clamp(15px, 1.9dvh + .6vw, 26px) * var(--fit, 1)); line-height: 1.65; }
+.text.denser p { font-size: calc(clamp(14px, 1.7dvh + .5vw, 22px) * var(--fit, 1)); line-height: 1.6; }
 
-/* 横向き（iPadを寝かせたとき）は 絵が左・文字が右 */
-@media (orientation: landscape) and (min-width: 700px) {
-  .spread { flex-direction: row; align-items: stretch; gap: 16px; }
-  .pic { flex: 1 1 55%; }
-  .text {
-    flex: 1 1 45%; max-height: none;
-    display: flex; flex-direction: column; justify-content: center;
-    padding: 24px 28px;
+/* よこむき（iPad を寝かせたとき・iPhone の横）は 絵が左・文が右 */
+@media (orientation: landscape) {
+  .spread {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas: "pic text" "pic done";
+    column-gap: 18px;
   }
+  .pic { width: calc(min(62vw, (100dvh - var(--fog) - 62px - var(--sab) - 12px) * var(--ar, 1.333)) * var(--ps, 1)); }
+  .text { padding: 4vh 3vw; }
+  .text p { font-size: calc(clamp(16px, 2.3dvh + .4vw, 30px) * var(--fit, 1)); }
+  .text.dense p { font-size: calc(clamp(15px, 2.1dvh + .3vw, 26px) * var(--fit, 1)); }
+  .text.denser p { font-size: calc(clamp(14px, 1.9dvh + .3vw, 22px) * var(--fit, 1)); }
+}
+@media (orientation: landscape) and (max-height: 500px) {
+  /* 高さがないので、星のボタンは 絵の下のほうに重ねて、文の板を 縦いっぱいに使う */
+  .spread { padding-top: calc(var(--fog) + 54px); gap: 10px; grid-template-rows: minmax(0, 1fr); grid-template-areas: "pic text"; }
+  .spread .done { grid-area: pic; align-self: end; margin-bottom: 8px; }
+  .pic { width: calc(min(58vw, (100dvh - var(--fog) - 54px - var(--sab) - 12px) * var(--ar, 1.333)) * var(--ps, 1)); border-radius: 16px; }
+  .text { padding: 12px 16px; border-radius: 18px; }
 }
 
-/* ページをめくるタップ領域（見えないボタン） */
-.tap {
-  position: absolute; top: 0; bottom: var(--bar-h);
-  background: none; padding: 0;
-}
+/* ページをめくるタップ領域（見えないボタン）。上の「ほんだな」と 星のボタンには かぶせない */
+.tap { position: absolute; z-index: 2; top: calc(var(--fog) + 56px); bottom: 0; background: none; padding: 0; }
 .tap-prev { left: 0; width: 33%; }
 .tap-next { left: 33%; right: 0; }
 .tap:disabled { cursor: default; }
 
-/* 下のバー */
-.bar {
-  position: relative; z-index: 2;
-  height: var(--bar-h);
-  padding: 0 14px max(6px, env(safe-area-inset-bottom));
-  display: flex; align-items: center; gap: 12px;
-}
-.bar .dots { flex: 1; padding: 0; }
-
 .back {
-  flex: 0 0 auto;
+  position: absolute; z-index: 4; left: calc(var(--sal) + 12px); top: var(--fog);
+  display: flex; align-items: center; gap: .45em;
+  min-height: 48px; padding: 0 20px 0 15px; border-radius: 999px;   /* 指で押しやすい大きさ */
   font-size: 17px; font-weight: 700; color: #fff;
-  background: rgba(255, 255, 255, .16);
-  border-radius: 999px; padding: 13px 20px;
-  min-height: 48px;                 /* 指で押しやすい大きさ */
+  background: rgba(255, 255, 255, .2);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
 }
-.back:active { background: rgba(255, 255, 255, .3); }
+.back .ico { font-size: 24px; }
+.back:active { background: rgba(255, 255, 255, .34); }
+.back.nudge { animation: nudge 1.4s ease-in-out 1s infinite; }
+@keyframes nudge { 50% { background: rgba(255, 255, 255, .45); } }
 
-/* さいごのページの 星のボタン（ふたり分）。白地だと青白い星が見えにくいので、紺の地にする */
-.done { flex: 1; display: flex; justify-content: flex-end; gap: 10px; animation: pop .3s ease-out; }
-.done[hidden] { display: none; }
+.page-dots { position: absolute; z-index: 3; right: calc(var(--sar) + 18px); top: calc(var(--fog) + 20px); gap: 7px; pointer-events: none; }
+.page-dots i { width: 7px; height: 7px; }
+
+/* さいごのページの 星のボタン（ふたり分） */
+.done { grid-area: done; position: relative; z-index: 3; display: flex; justify-content: center; gap: 14px; animation: pop .3s ease-out; }
 .star-btn {
   display: flex; align-items: center; gap: 6px;
-  min-height: 56px; padding: 4px 16px 4px 8px; border-radius: 999px;
-  background: #1f2f5e; border: 2px solid rgba(255, 255, 255, .35);
-  font-size: 17px; font-weight: 700; color: #fff;
+  min-height: 60px; padding: 4px 20px 4px 8px; border-radius: 999px;
+  background: #22305f; border: 2px solid rgba(255, 255, 255, .3);
+  font-size: 18px; font-weight: 700; color: #fff;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, .3);
   transition: background .2s, box-shadow .2s, border-color .2s;
 }
-.star-btn img { width: 44px; height: 44px; display: block; }
+.star-btn img { width: 48px; height: 48px; display: block; }
 .star-btn.on { background: #33477f; border-color: #fff; }
-.star-btn.on[data-c="b"] { box-shadow: 0 0 18px rgba(188, 212, 255, .9); }
-.star-btn.on[data-c="r"] { box-shadow: 0 0 18px rgba(255, 171, 122, .9); }
+.star-btn.on[data-c="b"] { box-shadow: 0 0 0 2px #fff, 0 0 26px rgba(188, 212, 255, .95); }
+.star-btn.on[data-c="r"] { box-shadow: 0 0 0 2px #fff, 0 0 26px rgba(255, 171, 122, .95); }
 .star-btn:active { transform: scale(.96); }
-@media (max-width: 480px) {      /* iPhoneの縦。字を消して 星だけの丸いボタンに */
-  .star-btn { padding: 4px; min-width: 56px; justify-content: center; }
-  .star-btn span { display: none; }
+@media (max-height: 500px) {
+  .star-btn { min-height: 50px; padding: 2px 14px 2px 6px; font-size: 16px; }
+  .star-btn img { width: 40px; height: 40px; }
 }
-.back.nudge { animation: nudge 1.4s ease-in-out 1s infinite; }
-@keyframes nudge { 50% { background: rgba(255, 255, 255, .34); } }
 
 .toast {
   position: absolute; left: 50%; top: 38%; z-index: 5; transform: translate(-50%, -50%);
   display: flex; align-items: center; gap: 10px; white-space: nowrap;
   padding: 12px 24px; border-radius: 999px;
-  background: rgba(20, 32, 66, .92); border: 1px solid rgba(232, 201, 143, .6);
-  color: #f3d48a; font-size: clamp(17px, 3vh, 26px); font-weight: 700; letter-spacing: .1em;
+  background: rgba(255, 255, 255, .92); color: var(--ink);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, .35);
+  font-size: clamp(17px, 3vh, 26px); font-weight: 700; letter-spacing: .1em;
   pointer-events: none;
 }
 .toast img { width: 1.6em; height: auto; }
@@ -289,21 +320,22 @@ button { font-family: inherit; border: 0; background: none; color: inherit; curs
 @keyframes pop { from { transform: scale(.7); opacity: 0; } }
 
 /* ページが切り替わるときの、ふわっとした出方 */
-.spread.turn .pic img, .spread.turn .text { animation: fade .22s ease-out; }
-@keyframes fade { from { opacity: 0; transform: translateY(6px); } }
+.spread.turn .pic img, .spread.turn .text .in { animation: fade .26s ease-out; }
+@keyframes fade { from { opacity: 0; } }
 
 .loading {
   position: fixed; inset: 0; display: grid; place-items: center;
-  background: rgba(20, 30, 60, .85); font-size: 18px; z-index: 10;
+  background: rgba(12, 16, 34, .85); font-size: 18px; z-index: 10;
 }
 .loading[hidden] { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
-  .spread.turn .pic img, .spread.turn .text, .done, .sky .kira.new, .back.nudge, .toast.show { animation: none; }
+  .spread.turn .pic img, .spread.turn .text .in, .done, .sky .kira.new, .back.nudge, .toast.show { animation: none; }
+  .shelf-bg .layer { transition: none; }
 }
 
 /* display を指定した部品にも hidden を効かせる */
-.dots[hidden], .toast[hidden] { display: none; }
+[hidden] { display: none !important; }
 
 /* おとなのひと（合言葉で そろえる・星を けす）。子どもの目にはふれない小さな入口から開く */
 .grown {

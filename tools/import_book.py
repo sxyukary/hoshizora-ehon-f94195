@@ -46,6 +46,15 @@ SLUG_MAP = {
 # 表示順（本棚に並ぶ順番）
 BOOK_ORDER = ["orion-scorpio", "orion-artemis", "gemini", "ursa-major", "cassiopeia", "virgo", "sagittarius", "aquarius", "aries", "cancer", "pisces"]
 
+# 季節（本棚の「きせつの とびら」）。夜8時ごろに見やすい季節
+# オリオンと さそりは両方出てくるが、題名の最初のオリオン（冬）に入れる
+SEASON = {
+    "orion-scorpio": "fuyu", "orion-artemis": "fuyu", "gemini": "fuyu",
+    "ursa-major": "haru", "cancer": "haru", "virgo": "haru",
+    "sagittarius": "natsu",
+    "cassiopeia": "aki", "aquarius": "aki", "pisces": "aki", "aries": "aki",
+}
+
 # テーマ色の上書き（ふたご座とおおぐま座が元は同じ紫だったため振り分け直す）
 # ※暫定値。Step 2 で実物を見て確定する。
 THEME_OVERRIDE = {
@@ -318,6 +327,12 @@ def main():
     check_private_words(book_text, src.name)
     (out_dir / "book.json").write_text(book_text, encoding="utf-8")
 
+    # 絵に描きこまれた紙のふちを測って、book.json に書き足す（tools/trim_edges.py）
+    from trim_edges import apply_to_book
+    apply_to_book(out_dir)
+    if slug not in SEASON:
+        print(f"  ⚠ SEASON に {slug} の季節がありません。本棚の とびらに出ないので、足してください")
+
     print(
         f"  ── {len(pages_data)}ページ  "
         f"{total_before/1024/1024:.1f}MB → {total_after/1024/1024:.2f}MB "
@@ -365,6 +380,8 @@ def update_manifest():
                 "theme": b["theme"],
                 "cover": f"books/{b['slug']}/{b['cover']}",
                 "pageCount": len(b["pages"]),
+                "season": SEASON.get(b["slug"], ""),
+                "coverTrim": b.get("coverTrim", 0),
             }
         )
 

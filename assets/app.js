@@ -1,5 +1,6 @@
 /* ほしぞら絵本
-   ほんだな（案C: 1冊ずつ大きく・横にすべらせて選ぶ）と、よむ画面。
+   ほんだな（1冊ずつ大きく・横にすべらせて選ぶ。季節の とびらで しぼる）と、よむ画面。
+   見た目は 案2「まどの むこう」（2026-11-28）。
    設計方針は ../設計図.md を参照 */
 
 const $ = (id) => document.getElementById(id);
@@ -22,13 +23,33 @@ const MAX_SKY = 160;                   // 夜空に並べる星の上限
 const el = {
   shelf: $("shelf"), reader: $("reader"), loading: $("loading"),
   rail: $("rail"), shelfDots: $("shelfDots"), grownOpen: $("grownOpen"), sky: $("sky"),
-  spread: $("spread"), pic: $("pic"), text: $("text"),
+  doors: $("doors"), wordmark: $("wordmark"), bgA: $("bgA"), bgB: $("bgB"),
+  spread: $("spread"), pic: $("pic"), picBox: $("picBox"), text: $("text"), readerBg: $("readerBg"),
   tapPrev: $("tapPrev"), tapNext: $("tapNext"),
   back: $("back"), pageDots: $("pageDots"), done: $("done"), toast: $("toast"),
 };
 
 let manifest = [];
 let book = null;      // いま開いている本
+let season = seasonNow();   // 本棚で いま開いている季節の とびら
+let focusSlug = "";         // 本棚に もどったとき まんなかに置く本
+
+/* 季節の とびら（案B）。季節は manifest.json の season（tools/import_book.py の SEASON） */
+const SEASONS = [
+  ["haru", "はる", `<svg viewBox="0 0 24 24" aria-hidden="true">${[0, 72, 144, 216, 288].map((r) =>
+    `<path transform="rotate(${r} 12 12)" d="M12 11.2C9.3 9.3 8.8 5.6 10.5 3.3L12 4.7l1.5-1.4c1.7 2.3 1.2 6-1.5 7.9z" fill="#f2a7bb"/>`).join("")}<circle cx="12" cy="12" r="1.9" fill="#e9b949"/></svg>`],
+  ["natsu", "なつ", `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.8" fill="#f3b73f"/>${[0, 45, 90, 135, 180, 225, 270, 315].map((r) =>
+    `<path transform="rotate(${r} 12 12)" d="M12 2v3" stroke="#f3b73f" stroke-width="2" stroke-linecap="round"/>`).join("")}</svg>`],
+  ["aki", "あき", `<svg viewBox="0 0 24 24" aria-hidden="true"><g transform="rotate(35 12 12)"><path d="M12 2.4C17 5.7 18.2 12 12 18.4 5.8 12 7 5.7 12 2.4z" fill="#e27547"/><path d="M12 4.8v16.8" stroke="#fde3cf" stroke-width="1.2" stroke-linecap="round"/><path d="M12 9.4l2.6-2M12 12.6l3.1-2.4M12 9.4l-2.6-2M12 12.6l-3.1-2.4" stroke="#fde3cf" stroke-width=".9" stroke-linecap="round"/></g></svg>`],
+  ["fuyu", "ふゆ", `<svg viewBox="0 0 24 24" fill="none" stroke="#8fb6ea" stroke-width="1.9" stroke-linecap="round" aria-hidden="true">${[0, 60, 120].map((r) =>
+    `<g transform="rotate(${r} 12 12)"><path d="M12 2.2v19.6"/><path d="M9.3 4.6 12 7l2.7-2.4M9.3 19.4 12 17l2.7 2.4"/></g>`).join("")}</svg>`],
+];
+function seasonNow(d = new Date()) {
+  const m = d.getMonth() + 1;
+  return m === 12 || m <= 2 ? "fuyu" : m <= 5 ? "haru" : m <= 8 ? "natsu" : "aki";
+}
+/* 絵に描きこまれた紙のふちを切り落とす倍率（trim は tools/trim_edges.py が測った、片側の割合） */
+const zoomOf = (trim) => (trim > 0 ? (1 / (1 - 2 * trim)).toFixed(3) : 1);
 let page = 0;         // いま何ページ目（0はじまり）
 const cache = new Map();
 
@@ -83,10 +104,31 @@ function renderSky(rec = loadRec()) {
   el.sky.querySelector(".stars").innerHTML = sky.map((c, i) => {
     const p = skyPos(i);
     return `<img class="kira${i >= seen ? " new" : ""}" src="assets/kira-${COLOR_FILE[c]}.webp" alt=""
-      style="left:${p.x}%;top:${p.y}%;--k:${p.s}">`;
+      data-x="${p.x}" data-y="${p.y}" style="left:${p.x}%;top:${p.y}%;--k:${p.s}">`;
   }).join("");
   el.sky.setAttribute("aria-label", `ふたりの よぞら。ほし ${sky.length}こ`);
   save(SEEN_KEY, sky.length);
+  layoutSky();
+}
+
+/* 夜空の帯を「時計の下の ぼかしより下 〜 本の上」に合わせ、タイトルの文字にかかる星は 横によける */
+function layoutSky() {
+  const cover = el.rail.querySelector(".book .cover");
+  if (!cover || !el.shelf.classList.contains("on")) return;
+  const top = el.sky.offsetTop, bottom = cover.getBoundingClientRect().top - 6;
+  const h = Math.max(36, bottom - top), w = el.sky.clientWidth;
+  el.sky.style.height = h + "px";
+  const m = el.wordmark.getBoundingClientRect(), shown = m.width > 0;
+  el.sky.querySelectorAll(".kira").forEach((s) => {
+    const x = parseFloat(s.dataset.x) / 100 * w, y = top + parseFloat(s.dataset.y) / 100 * h;
+    let left = parseFloat(s.dataset.x);
+    if (shown && y > m.top - 12 && y < m.bottom + 12 && x > m.left - 16 && x < m.right + 16) {
+      // タイトルの左右の近いほうへ。はみ出すときは反対へ
+      const toL = (m.left - 20 - (m.right - x) * 0.4) / w * 100, toR = (m.right + 20 + (x - m.left) * 0.4) / w * 100;
+      left = x < (m.left + m.right) / 2 ? (toL > 2 ? toL : toR) : (toR < 98 ? toR : toL);
+    }
+    s.style.left = left + "%";
+  });
 }
 
 function coverStamps(c) {
@@ -107,32 +149,48 @@ async function initShelf() {
   manifest = (await res.json()).books;
   renderShelf();
   el.rail.addEventListener("scroll", updateShelfDots, { passive: true });
-  updateShelfDots();
 }
 
+function shelfBooks() { return manifest.filter((b) => b.season === season); }
+
 function renderShelf() {
-  const rec = loadRec(), counts = St.counts(rec);
-  renderSky(rec);
-  el.rail.innerHTML = manifest.map((b) => {
+  const rec = loadRec(), counts = St.counts(rec), books = shelfBooks();
+  el.doors.innerHTML = SEASONS.map(([k, name, icon]) =>
+    `<button class="door" data-season="${k}" aria-pressed="${k === season}">${icon}<span>${name}</span></button>`).join("");
+  el.rail.innerHTML = books.map((b) => {
     const title = (b.titleLines && b.titleLines.length ? b.titleLines : [b.title]).join("<br>");
     return `<button class="book" data-slug="${b.slug}" style="--th:${b.theme}">
-      <div class="cover">
+      <div class="cover" style="--z:${zoomOf(b.coverTrim)}">
         <img src="${b.cover}" alt="">
         ${coverStamps(counts[b.slug])}
       </div>
-      <div class="meta">
-        <div class="bt">${title}</div>
-        <div class="bn">${b.pageCount}ページ</div>
-      </div>
+      <div class="bt">${title}</div>
+      <div class="bn">${b.pageCount}ページ</div>
     </button>`;
   }).join("");
 
-  el.shelfDots.innerHTML = manifest.map((_, i) =>
-    `<i class="${i === 0 ? "on" : ""}"></i>`).join("");
+  el.shelfDots.innerHTML = books.map((_, i) => `<i class="${i === 0 ? "on" : ""}"></i>`).join("");
 
   el.rail.querySelectorAll(".book").forEach((btn) => {
     btn.addEventListener("click", () => openBook(btn.dataset.slug));
   });
+  shelfAt = -1;
+  scrollToBook(focusSlug);
+  renderSky(rec);
+}
+
+el.doors.addEventListener("click", (e) => {
+  const d = e.target.closest(".door");
+  if (!d || d.dataset.season === season) return;
+  season = d.dataset.season; focusSlug = "";
+  renderShelf();
+});
+
+/* その本を まんなかに（ない・空なら いちばん左） */
+function scrollToBook(slug) {
+  const card = slug && el.rail.querySelector(`.book[data-slug="${slug}"]`);
+  el.rail.scrollLeft = card ? card.offsetLeft + card.offsetWidth / 2 - el.rail.clientWidth / 2 : 0;
+  updateShelfDots();
 }
 
 /* 星だけ描き直す（本棚の並びと すべらせた位置は そのまま） */
@@ -146,6 +204,8 @@ function refreshStars() {
   });
 }
 
+/* うしろの ぼかした絵を、まんなかの本の表紙に（2枚を かさねて ゆっくり入れかえる） */
+let shelfAt = -1, bgFront = el.bgA;
 function updateShelfDots() {
   const cards = [...el.rail.querySelectorAll(".book")];
   if (!cards.length) return;
@@ -157,6 +217,13 @@ function updateShelfDots() {
   });
   el.shelfDots.querySelectorAll("i").forEach((d, i) =>
     d.classList.toggle("on", i === near));
+  if (near === shelfAt) return;
+  shelfAt = near;
+  const src = cards[near].querySelector("img").getAttribute("src");
+  const back = bgFront === el.bgA ? el.bgB : el.bgA;
+  back.style.backgroundImage = `url("${src}")`;
+  back.classList.add("on"); bgFront.classList.remove("on");
+  bgFront = back;
 }
 
 /* ---------- 本をひらく ---------- */
@@ -169,6 +236,9 @@ async function openBook(slug) {
     }
     book = cache.get(slug);
     book.slug = slug;
+    focusSlug = slug;
+    const s = manifest.find((b) => b.slug === slug)?.season;
+    if (s && s !== season) { season = s; shelfStale = true; }   // 本棚に もどったら その本の季節を出す
 
     document.documentElement.style.setProperty("--th", book.theme);
     el.pageDots.innerHTML = book.pages.map(() => "<i></i>").join("");
@@ -186,11 +256,13 @@ async function openBook(slug) {
   }
 }
 
+let shelfStale = false;
 function closeBook() {
   el.reader.classList.remove("on");
   el.reader.hidden = true;
   el.shelf.classList.add("on");
-  refreshStars();         // 星の増加を反映
+  if (shelfStale) { shelfStale = false; renderShelf(); }
+  else { refreshStars(); scrollToBook(focusSlug); }   // 星の増加を反映。読んだ本を まんなかに
   syncSoon();
   book = null;
 }
@@ -229,9 +301,14 @@ function charCount(paragraphs) {
 function showPage(animate = true) {
   const p = book.pages[page];
 
-  el.pic.src = `books/${book.slug}/${p.image}`;
+  const src = `books/${book.slug}/${p.image}`;
+  el.pic.src = src;
   el.pic.alt = p.alt || "";
-  el.text.innerHTML = paragraphsToHtml(p.paragraphs);
+  // 絵の枠は 絵そのものの形に。紙のふちは 切り落とす
+  if (p.w && p.h) el.picBox.style.setProperty("--ar", (p.w / p.h).toFixed(4));
+  el.picBox.style.setProperty("--z", zoomOf(p.trim));
+  el.readerBg.style.backgroundImage = `url("${src}")`;
+  el.text.innerHTML = `<div class="in">${paragraphsToHtml(p.paragraphs)}</div>`;
 
   // 文章が多いページだけ、文字を少し小さくして画面に収める
   const n = charCount(p.paragraphs);
@@ -265,10 +342,19 @@ function showPage(animate = true) {
 /* 文章が枠からはみ出すときは、収まるまで文字を少しずつ小さくする。
    子どもにスクロールさせないための仕掛け。 */
 function fitText() {
-  const t = el.text;
+  const t = el.text, over = () => t.scrollHeight > t.clientHeight + 1;
   t.style.removeProperty("--fit");
+  // まず 絵を少し小さくして 文の場所を広げる（7割まで。高さのない横向きの iPhone は 5割まで）。
+  // それでも入らなければ 字を縮める
+  el.picBox.style.removeProperty("--ps");
+  const psMin = innerHeight <= 500 ? 0.6 : 0.72;
+  let ps = 1;
+  while (over() && ps > psMin) {
+    ps -= 0.06;
+    el.picBox.style.setProperty("--ps", ps.toFixed(2));
+  }
   let fit = 1;
-  while (t.scrollHeight > t.clientHeight + 1 && fit > 0.6) {
+  while (over() && fit > 0.6) {
     fit -= 0.04;
     t.style.setProperty("--fit", fit.toFixed(2));
   }
@@ -278,7 +364,7 @@ function fitText() {
 let fitTimer;
 const refit = () => {
   clearTimeout(fitTimer);
-  fitTimer = setTimeout(() => { if (book) fitText(); }, 120);
+  fitTimer = setTimeout(() => { if (book) fitText(); else { scrollToBook(focusSlug); layoutSky(); } }, 120);
 };
 window.addEventListener("resize", refit);
 window.addEventListener("orientationchange", refit);

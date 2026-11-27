@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="robots" content="noindex, nofollow">
-<meta name="theme-color" content="#1a2a52">
+<meta name="theme-color" content="#0c1022">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ほしぞら絵本">
@@ -19,50 +19,39 @@
 </head>
 <body>
 
-<!-- ===== ほんだな ===== -->
+<!-- ===== ほんだな（案2「まどの むこう」）=====
+     選んでいる本の絵が ぼけて うしろに広がる。季節は 下の4つの とびらで えらぶ -->
 <section id="shelf" class="view on">
-  <header class="shelf-head">
-    <div class="title">
-      <span class="rule"></span>
-      <svg class="mark" width="15" height="15" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 0c1 7.2 4.8 11 12 12-7.2 1-11 4.8-12 12-1-7.2-4.8-11-12-12C7.2 11 11 7.2 12 0z"/>
-      </svg>
-      <h1>ほしぞら絵本</h1>
-      <svg class="mark" width="15" height="15" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 0c1 7.2 4.8 11 12 12-7.2 1-11 4.8-12 12-1-7.2-4.8-11-12-12C7.2 11 11 7.2 12 0z"/>
-      </svg>
-      <span class="rule r"></span>
-    </div>
-  </header>
+  <div class="shelf-bg" aria-hidden="true"><div class="layer" id="bgA"></div><div class="layer" id="bgB"></div></div>
+  <div class="shelf-shade" aria-hidden="true"></div>
 
-  <div class="sky" id="sky" role="img" aria-label="ふたりの よぞら">
-    <div class="stars"></div>
-    <div class="sky-label">ふたりの よぞら</div>
-  </div>
+  <div class="sky" id="sky" role="img" aria-label="ふたりの よぞら"><div class="stars"></div></div>
+  <h1 class="wordmark" id="wordmark">ほしぞら絵本</h1>
 
   <div class="rail" id="rail" aria-label="えほんの いちらん"></div>
-
   <div class="dots" id="shelfDots" aria-hidden="true"></div>
-  <p class="hint">よこに すべらせて えらぶ</p>
 
+  <nav class="doors" id="doors" aria-label="きせつ"></nav>
   <button class="tiny" id="grownOpen">おとなのひと</button>
 </section>
 
 <!-- ===== よむ がめん ===== -->
 <section id="reader" class="view" hidden>
+  <div class="reader-bg" id="readerBg" aria-hidden="true"></div>
   <div class="spread" id="spread">
-    <div class="pic"><img id="pic" alt=""></div>
+    <div class="pic" id="picBox"><img id="pic" alt=""></div>
     <div class="text" id="text"></div>
+    <div class="done" id="done" hidden></div>
   </div>
 
   <button class="tap tap-prev" id="tapPrev" aria-label="まえの ページ"></button>
   <button class="tap tap-next" id="tapNext" aria-label="つぎの ページ"></button>
 
-  <div class="bar">
-    <button class="back" id="back">◀ ほんだな</button>
-    <div class="dots" id="pageDots" aria-hidden="true"></div>
-    <div class="done" id="done" hidden></div>
-  </div>
+  <button class="back" id="back">
+    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4.5h3.2v15H4zM9.6 4.5h3.2v15H9.6z"/><path d="m15.2 5.6 3-.8 3.6 14-3 .8z"/><path d="M2.5 20.5h19"/></svg>
+    <span>ほんだな</span>
+  </button>
+  <div class="dots page-dots" id="pageDots" aria-hidden="true"></div>
 
   <div class="toast" id="toast" hidden aria-live="polite"></div>
 </section>

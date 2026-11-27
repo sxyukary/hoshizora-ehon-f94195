@@ -174,7 +174,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0.053,
+      "w": 1024,
+      "h": 1024
     },
     {
       "image": "p02.webp",
@@ -360,7 +363,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0.049,
+      "w": 1024,
+      "h": 1024
     },
     {
       "image": "p03.webp",
@@ -542,7 +548,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0.071,
+      "w": 1024,
+      "h": 1024
     },
     {
       "image": "p04.webp",
@@ -773,7 +782,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0.08,
+      "w": 1024,
+      "h": 1024
     },
     {
       "image": "p05.webp",
@@ -932,7 +944,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0.053,
+      "w": 1024,
+      "h": 1024
     },
     {
       "image": "p06.webp",
@@ -1150,7 +1165,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0.08,
+      "w": 1024,
+      "h": 1024
     },
     {
       "image": "p07.webp",
@@ -1372,7 +1390,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0.064,
+      "w": 1024,
+      "h": 1024
     },
     {
       "image": "p08.webp",
@@ -1639,8 +1660,12 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0.038,
+      "w": 1024,
+      "h": 1024
     }
   ],
-  "source": "おおぐま座.html"
+  "source": "おおぐま座.html",
+  "coverTrim": 0.053
 }

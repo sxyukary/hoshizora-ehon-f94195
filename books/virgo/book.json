@@ -44,7 +44,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0.026,
+      "w": 1024,
+      "h": 1024
     },
     {
       "image": "p02.webp",
@@ -81,7 +84,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0,
+      "w": 1024,
+      "h": 1024
     },
     {
       "image": "p03.webp",
@@ -112,7 +118,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0,
+      "w": 1024,
+      "h": 1024
     },
     {
       "image": "p04.webp",
@@ -141,7 +150,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0.08,
+      "w": 1024,
+      "h": 1024
     },
     {
       "image": "p05.webp",
@@ -172,7 +184,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0,
+      "w": 1024,
+      "h": 1024
     },
     {
       "image": "p06.webp",
@@ -201,7 +216,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0.024,
+      "w": 1024,
+      "h": 1024
     },
     {
       "image": "p07.webp",
@@ -230,7 +248,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0.08,
+      "w": 1024,
+      "h": 1024
     },
     {
       "image": "p08.webp",
@@ -251,7 +272,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0,
+      "w": 1024,
+      "h": 1024
     },
     {
       "image": "p09.webp",
@@ -290,7 +314,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0,
+      "w": 1024,
+      "h": 1024
     },
     {
       "image": "p10.webp",
@@ -321,8 +348,12 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0.043,
+      "w": 1024,
+      "h": 1024
     }
   ],
-  "source": "おとめ座.html"
+  "source": "おとめ座.html",
+  "coverTrim": 0.026
 }

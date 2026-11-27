@@ -61,7 +61,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0,
+      "w": 1200,
+      "h": 896
     },
     {
       "image": "p02.webp",
@@ -130,7 +133,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0.026,
+      "w": 1200,
+      "h": 896
     },
     {
       "image": "p03.webp",
@@ -185,7 +191,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0,
+      "w": 1200,
+      "h": 896
     },
     {
       "image": "p04.webp",
@@ -240,7 +249,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0.08,
+      "w": 1200,
+      "h": 896
     },
     {
       "image": "p05.webp",
@@ -309,7 +321,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0.08,
+      "w": 1200,
+      "h": 896
     },
     {
       "image": "p06.webp",
@@ -372,7 +387,10 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0.021,
+      "w": 1200,
+      "h": 896
     },
     {
       "image": "p07.webp",
@@ -435,8 +453,12 @@
           ]
         ]
       ],
-      "audio": null
+      "audio": null,
+      "trim": 0.046,
+      "w": 1200,
+      "h": 896
     }
   ],
-  "source": "おひつじ座.html"
+  "source": "おひつじ座.html",
+  "coverTrim": 0
 }

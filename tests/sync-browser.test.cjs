@@ -45,7 +45,12 @@ const BASE = process.argv[2] || 'http://127.0.0.1:8765/', SHOTS = process.argv[3
     await settle(pg);
     return pg.textContent('#syncStatus');
   }
-  const coverRows = (pg, i) => pg.$$eval('.book', (bs, i) => [...bs[i].querySelectorAll('.stamps .row')].map((r) => r.getAttribute('aria-label')), i);
+  // その本の季節の とびらを開いてから、表紙の星を読む
+  const coverRows = async (pg, slug) => {
+    const s = await pg.evaluate((slug) => window.hoshizora.books.find((b) => b.slug === slug).season, slug);
+    await pg.click(`.door[data-season="${s}"]`);
+    return pg.$$eval(`.book[data-slug="${slug}"] .stamps .row`, (rs) => rs.map((r) => r.getAttribute('aria-label')));
+  };
 
   try {
     // iPad：前の版の記録がある（はじめに新しい形へ移る）
@@ -86,8 +91,7 @@ const BASE = process.argv[2] || 'http://127.0.0.1:8765/', SHOTS = process.argv[3
     // iPad：画面にもどってくると そろう。表紙と夜空も変わる
     await settle(ipad);
     assert.equal(stars(await rec(ipad)), 4);
-    const vi = slugs.indexOf('virgo');
-    assert.deepEqual(await coverRows(ipad, vi), ['あかい ほし 1かい']);
+    assert.deepEqual(await coverRows(ipad, 'virgo'), ['あかい ほし 1かい']);
     assert.equal(await ipad.$$eval('#sky .kira', (k) => k.length), 4);
 
     // 同じ本を 2台で 同時に読んでも 数がずれない。取り消しは ほかの端末にも届く
