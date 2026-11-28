@@ -21,3 +21,4 @@ tools/private_words.txt
 # Cloudflare に送るために写したもの（node tools/build.cjs が作る）
 dist/
 .wrangler/
+絵と文の大きさの案.html

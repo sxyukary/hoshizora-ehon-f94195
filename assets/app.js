@@ -298,14 +298,28 @@ function charCount(paragraphs) {
   return n;
 }
 
+// その本で いちばん多い 絵の形（横÷縦）
+function bookAspect(b) {
+  if (b.aspect) return b.aspect;
+  const count = new Map();
+  b.pages.forEach((p) => {
+    if (!p.w || !p.h) return;
+    const ar = Math.round((p.w / p.h) * 100) / 100;
+    count.set(ar, (count.get(ar) || 0) + 1);
+  });
+  b.aspect = [...count].sort((x, y) => y[1] - x[1])[0]?.[0] || 1.333;
+  return b.aspect;
+}
+
 function showPage(animate = true) {
   const p = book.pages[page];
 
   const src = `books/${book.slug}/${p.image}`;
   el.pic.src = src;
   el.pic.alt = p.alt || "";
-  // 絵の枠は 絵そのものの形に。紙のふちは 切り落とす
-  if (p.w && p.h) el.picBox.style.setProperty("--ar", (p.w / p.h).toFixed(4));
+  // 絵の枠は 絵そのものの形に。紙のふちは 切り落とす。
+  // 枠の形は 1冊で そろえる（形が少しだけ違う絵があっても、めくって枠が動かないように。はみ出すぶんは cover で切る）
+  el.picBox.style.setProperty("--ar", bookAspect(book).toFixed(4));
   el.picBox.style.setProperty("--z", zoomOf(p.trim));
   el.readerBg.style.backgroundImage = `url("${src}")`;
   el.text.innerHTML = `<div class="in">${paragraphsToHtml(p.paragraphs)}</div>`;
@@ -340,21 +354,13 @@ function showPage(animate = true) {
 }
 
 /* 文章が枠からはみ出すときは、収まるまで文字を少しずつ小さくする。
-   子どもにスクロールさせないための仕掛け。 */
+   子どもにスクロールさせないための仕掛け。
+   絵は 文の量で 動かさない（めくっても 絵の大きさと場所が 変わらないように。2026-11-28 案B） */
 function fitText() {
   const t = el.text, over = () => t.scrollHeight > t.clientHeight + 1;
   t.style.removeProperty("--fit");
-  // まず 絵を少し小さくして 文の場所を広げる（7割まで。高さのない横向きの iPhone は 5割まで）。
-  // それでも入らなければ 字を縮める
-  el.picBox.style.removeProperty("--ps");
-  const psMin = innerHeight <= 500 ? 0.6 : 0.72;
-  let ps = 1;
-  while (over() && ps > psMin) {
-    ps -= 0.06;
-    el.picBox.style.setProperty("--ps", ps.toFixed(2));
-  }
   let fit = 1;
-  while (over() && fit > 0.6) {
+  while (over() && fit > 0.4) {
     fit -= 0.04;
     t.style.setProperty("--fit", fit.toFixed(2));
   }

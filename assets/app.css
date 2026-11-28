@@ -197,10 +197,10 @@ button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
 }
 
 /* 絵の枠の形は、絵そのものの形（--ar：横÷縦）。真四角の絵も 横長の絵も 切らずに見せる。
-   --ps は 文が多いページで 絵を少し小さくする倍率（JS の fitText が決める。字を縮めるより先に） */
+   絵の大きさは 文の量で 変えない（めくっても 絵が動かないように） */
 .pic {
   grid-area: pic; justify-self: center; align-self: center;
-  width: calc(min(100%, 40dvh * var(--ar, 1.333)) * var(--ps, 1));
+  width: min(100%, 40dvh * var(--ar, 1.333));
   aspect-ratio: var(--ar, 1.333); overflow: hidden;
   border-radius: 22px; background: #1b2140;
   box-shadow: 0 20px 50px rgba(0, 0, 0, .45);
@@ -252,7 +252,7 @@ button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
     grid-template-areas: "pic text" "pic done";
     column-gap: 18px;
   }
-  .pic { width: calc(min(62vw, (100dvh - var(--fog) - 62px - var(--sab) - 12px) * var(--ar, 1.333)) * var(--ps, 1)); }
+  .pic { width: calc(min(62vw, (100dvh - var(--fog) - 62px - var(--sab) - 12px) * var(--ar, 1.333))); }
   .text { padding: 4vh 3vw; }
   .text p { font-size: calc(clamp(16px, 2.3dvh + .4vw, 30px) * var(--fit, 1)); }
   .text.dense p { font-size: calc(clamp(15px, 2.1dvh + .3vw, 26px) * var(--fit, 1)); }
@@ -262,7 +262,7 @@ button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
   /* 高さがないので、星のボタンは 絵の下のほうに重ねて、文の板を 縦いっぱいに使う */
   .spread { padding-top: calc(var(--fog) + 54px); gap: 10px; grid-template-rows: minmax(0, 1fr); grid-template-areas: "pic text"; }
   .spread .done { grid-area: pic; align-self: end; margin-bottom: 8px; }
-  .pic { width: calc(min(58vw, (100dvh - var(--fog) - 54px - var(--sab) - 12px) * var(--ar, 1.333)) * var(--ps, 1)); border-radius: 16px; }
+  .pic { width: calc(min(58vw, (100dvh - var(--fog) - 54px - var(--sab) - 12px) * var(--ar, 1.333))); border-radius: 16px; }
   .text { padding: 12px 16px; border-radius: 18px; }
 }
 

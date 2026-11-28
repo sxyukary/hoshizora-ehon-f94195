@@ -42,6 +42,7 @@ const SIZES = [
     for (const slug of books) {
       await page.evaluate((s) => window.hoshizora.openBook(s), slug);
       const n = await page.evaluate(() => window.hoshizora.current.pages.length);
+      const picSizes = new Set();   // めくっても 絵の大きさが変わらないこと（星のボタンが出る さいごのページは のぞく）
       for (let i = 0; i < n; i++) {
         await page.evaluate((i) => window.hoshizora.goTo(i), i);
         await page.waitForFunction(() => { const im = document.getElementById('pic'); return im.complete && im.naturalWidth > 0; }, null, { timeout: 15000 })
@@ -50,15 +51,18 @@ const SIZES = [
         const r = await page.evaluate(() => {
           const t = document.getElementById('text'), im = document.getElementById('pic');
           const ps = parseFloat(document.getElementById('picBox').style.getPropertyValue('--ps')) || 1;
-          return { over: t.scrollHeight - t.clientHeight, fit: parseFloat(getComputedStyle(t).getPropertyValue('--fit')) || 1, ps, img: im.naturalWidth > 0 };
+          const box = document.getElementById('picBox').getBoundingClientRect();
+          return { pic: Math.round(box.width) + 'x' + Math.round(box.height), over: t.scrollHeight - t.clientHeight, fit: parseFloat(getComputedStyle(t).getPropertyValue('--fit')) || 1, ps, img: im.naturalWidth > 0 };
         });
         checked++;
+        if (i < n - 1) picSizes.add(r.pic);
         minFit = Math.min(minFit, r.fit); minPs = Math.min(minPs, r.ps);
         if (r.fit < 0.8) small.push(`${name} ${slug}/${i + 1} ${r.fit}`);
         if (r.over > 1) { console.error(`✖ ${name} ${slug}/${i + 1}: 文字が ${r.over}px はみ出し`); fails++; }
         if (!r.img) { console.error(`✖ ${name} ${slug}/${i + 1}: 絵が出ていない`); fails++; }
         if (shots && i === n - 1 && slug === books[0]) await page.screenshot({ path: path.join(shots, `${name}.png`) });
       }
+      if (picSizes.size > 1) { console.error(`✖ ${name} ${slug}: めくると絵の大きさが変わる ${[...picSizes].join(' / ')}`); fails++; }
       await page.click('#back');
     }
     if (bad.length) { console.error(`✖ ${name}: ` + [...new Set(bad)].join('\n  ')); fails++; }

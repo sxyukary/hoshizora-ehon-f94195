@@ -2,7 +2,7 @@
    ・アプリの骨組み（画面・並び）は最初にまとめて保存する
    ・絵本の中身は、一度読んだものが自動で保存され、次からネットなしで開ける */
 
-const VERSION = "v20261128-mado2";
+const VERSION = "v20261128-mado3";
 const SHELL = `hoshizora-shell-${VERSION}`;
 const BOOKS = `hoshizora-books-${VERSION}`;
 
